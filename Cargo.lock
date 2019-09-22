@@ -306,10 +306,10 @@ dependencies = [
 [[package]]
 name = "faster-rs"
 version = "0.9.0"
-source = "git+https://github.com/faster-rs/faster-rs.git?branch=remove-serialisation#0a8f95daaf9f1a17f5e91f54bc6b49c4e83f1e94"
+source = "git+https://github.com/faster-rs/faster-rs.git?branch=remove-serialisation-measure-locking#86f13eb8500234583354531b4564ed3d33520b9f"
 dependencies = [
  "libc 0.2.62 (registry+https://github.com/rust-lang/crates.io-index)",
- "libfaster-sys 0.9.0 (git+https://github.com/faster-rs/faster-rs.git?branch=remove-serialisation)",
+ "libfaster-sys 0.9.0 (git+https://github.com/faster-rs/faster-rs.git?branch=remove-serialisation-measure-locking)",
 ]
 
 [[package]]
@@ -541,7 +541,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 [[package]]
 name = "libfaster-sys"
 version = "0.9.0"
-source = "git+https://github.com/faster-rs/faster-rs.git?branch=remove-serialisation#0a8f95daaf9f1a17f5e91f54bc6b49c4e83f1e94"
+source = "git+https://github.com/faster-rs/faster-rs.git?branch=remove-serialisation-measure-locking#86f13eb8500234583354531b4564ed3d33520b9f"
 dependencies = [
  "bindgen 0.50.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "cmake 0.1.42 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -869,7 +869,7 @@ dependencies = [
 
 [[package]]
 name = "proc-macro2"
-version = "1.0.3"
+version = "1.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "unicode-xid 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -907,7 +907,7 @@ name = "quote"
 version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
- "proc-macro2 1.0.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "proc-macro2 1.0.4 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -1140,7 +1140,7 @@ name = "serde_derive"
 version = "1.0.101"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
- "proc-macro2 1.0.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "proc-macro2 1.0.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "quote 1.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "syn 1.0.5 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -1246,7 +1246,7 @@ name = "syn"
 version = "1.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
- "proc-macro2 1.0.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "proc-macro2 1.0.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "quote 1.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "unicode-xid 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -1329,11 +1329,11 @@ dependencies = [
 [[package]]
 name = "timely"
 version = "0.9.0"
-source = "git+https://github.com/matthewbrookes/timely-dataflow.git?branch=measure-serialisation#6695cc199143e5199660e71ff5b8f6011ac4f12b"
+source = "git+https://github.com/matthewbrookes/timely-dataflow.git?branch=measure-serialisation#fc5ec06762ea3196ef050f92c64bafb4c1df504b"
 dependencies = [
  "abomonation 0.7.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "abomonation_derive 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "faster-rs 0.9.0 (git+https://github.com/faster-rs/faster-rs.git?branch=remove-serialisation)",
+ "faster-rs 0.9.0 (git+https://github.com/faster-rs/faster-rs.git?branch=remove-serialisation-measure-locking)",
  "serde 1.0.101 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_derive 1.0.101 (registry+https://github.com/rust-lang/crates.io-index)",
  "tempfile 3.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1346,12 +1346,12 @@ dependencies = [
 [[package]]
 name = "timely_bytes"
 version = "0.9.0"
-source = "git+https://github.com/matthewbrookes/timely-dataflow.git?branch=measure-serialisation#6695cc199143e5199660e71ff5b8f6011ac4f12b"
+source = "git+https://github.com/matthewbrookes/timely-dataflow.git?branch=measure-serialisation#fc5ec06762ea3196ef050f92c64bafb4c1df504b"
 
 [[package]]
 name = "timely_communication"
 version = "0.9.0"
-source = "git+https://github.com/matthewbrookes/timely-dataflow.git?branch=measure-serialisation#6695cc199143e5199660e71ff5b8f6011ac4f12b"
+source = "git+https://github.com/matthewbrookes/timely-dataflow.git?branch=measure-serialisation#fc5ec06762ea3196ef050f92c64bafb4c1df504b"
 dependencies = [
  "abomonation 0.7.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "abomonation_derive 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1365,15 +1365,15 @@ dependencies = [
 [[package]]
 name = "timely_logging"
 version = "0.9.0"
-source = "git+https://github.com/matthewbrookes/timely-dataflow.git?branch=measure-serialisation#6695cc199143e5199660e71ff5b8f6011ac4f12b"
+source = "git+https://github.com/matthewbrookes/timely-dataflow.git?branch=measure-serialisation#fc5ec06762ea3196ef050f92c64bafb4c1df504b"
 
 [[package]]
 name = "timely_state"
 version = "0.1.0"
-source = "git+https://github.com/matthewbrookes/timely-dataflow.git?branch=measure-serialisation#6695cc199143e5199660e71ff5b8f6011ac4f12b"
+source = "git+https://github.com/matthewbrookes/timely-dataflow.git?branch=measure-serialisation#fc5ec06762ea3196ef050f92c64bafb4c1df504b"
 dependencies = [
  "bincode 1.1.4 (registry+https://github.com/rust-lang/crates.io-index)",
- "faster-rs 0.9.0 (git+https://github.com/faster-rs/faster-rs.git?branch=remove-serialisation)",
+ "faster-rs 0.9.0 (git+https://github.com/faster-rs/faster-rs.git?branch=remove-serialisation-measure-locking)",
  "metrics 0.11.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "rocksdb 0.12.3 (git+https://github.com/matthewbrookes/rust-rocksdb?branch=log-mutex)",
  "serde 1.0.101 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1664,7 +1664,7 @@ dependencies = [
 "checksum either 1.5.3 (registry+https://github.com/rust-lang/crates.io-index)" = "bb1f6b1ce1c140482ea30ddd3335fc0024ac7ee112895426e0a629a6c20adfe3"
 "checksum env_logger 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)" = "aafcde04e90a5226a6443b7aabdb016ba2f8307c847d524724bd9b346dd1a2d3"
 "checksum failure 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)" = "795bd83d3abeb9220f257e597aa0080a508b27533824adf336529648f6abf7e2"
-"checksum faster-rs 0.9.0 (git+https://github.com/faster-rs/faster-rs.git?branch=remove-serialisation)" = "<none>"
+"checksum faster-rs 0.9.0 (git+https://github.com/faster-rs/faster-rs.git?branch=remove-serialisation-measure-locking)" = "<none>"
 "checksum fnv 1.0.6 (registry+https://github.com/rust-lang/crates.io-index)" = "2fad85553e09a6f881f739c29f0b00b0f01357c743266d478b68951ce23285f3"
 "checksum fuchsia-cprng 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)" = "a06f77d526c1a601b7c4cdd98f54b5eaabffc14d5f2f0296febdc7f357c6d3ba"
 "checksum fuchsia-zircon 0.3.3 (registry+https://github.com/rust-lang/crates.io-index)" = "2e9763c69ebaae630ba35f74888db465e49e259ba1bc0eda7d06f4a067615d82"
@@ -1692,7 +1692,7 @@ dependencies = [
 "checksum kernel32-sys 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)" = "7507624b29483431c0ba2d82aece8ca6cdba9382bff4ddd0f7490560c056098d"
 "checksum lazy_static 1.4.0 (registry+https://github.com/rust-lang/crates.io-index)" = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
 "checksum libc 0.2.62 (registry+https://github.com/rust-lang/crates.io-index)" = "34fcd2c08d2f832f376f4173a231990fa5aef4e99fb569867318a227ef4c06ba"
-"checksum libfaster-sys 0.9.0 (git+https://github.com/faster-rs/faster-rs.git?branch=remove-serialisation)" = "<none>"
+"checksum libfaster-sys 0.9.0 (git+https://github.com/faster-rs/faster-rs.git?branch=remove-serialisation-measure-locking)" = "<none>"
 "checksum libloading 0.5.2 (registry+https://github.com/rust-lang/crates.io-index)" = "f2b111a074963af1d37a139918ac6d49ad1d0d5e47f72fd55388619691a7d753"
 "checksum librocksdb-sys 6.1.2 (git+https://github.com/matthewbrookes/rust-rocksdb?branch=log-mutex)" = "<none>"
 "checksum linked-hash-map 0.5.2 (registry+https://github.com/rust-lang/crates.io-index)" = "ae91b68aebc4ddb91978b11a1b02ddd8602a05ec19002801c5666000e05e0f83"
@@ -1725,7 +1725,7 @@ dependencies = [
 "checksum peeking_take_while 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)" = "19b17cddbe7ec3f8bc800887bab5e717348c95ea2ca0b1bf0837fb964dc67099"
 "checksum ppv-lite86 0.2.5 (registry+https://github.com/rust-lang/crates.io-index)" = "e3cbf9f658cdb5000fcf6f362b8ea2ba154b9f146a61c7a20d647034c6b6561b"
 "checksum proc-macro2 0.4.30 (registry+https://github.com/rust-lang/crates.io-index)" = "cf3d2011ab5c909338f7887f4fc896d35932e29146c12c8d01da6b22a80ba759"
-"checksum proc-macro2 1.0.3 (registry+https://github.com/rust-lang/crates.io-index)" = "e98a83a9f9b331f54b924e68a66acb1bb35cb01fb0a23645139967abefb697e8"
+"checksum proc-macro2 1.0.4 (registry+https://github.com/rust-lang/crates.io-index)" = "afdc77cc74ec70ed262262942ebb7dac3d479e9e5cfa2da1841c0806f6cdabcc"
 "checksum quanta 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)" = "f4f7a1905379198075914bc93d32a5465c40474f90a078bb13439cb00c547bcc"
 "checksum quick-error 1.2.2 (registry+https://github.com/rust-lang/crates.io-index)" = "9274b940887ce9addde99c4eee6b5c44cc494b182b97e73dc8ffdcb3397fd3f0"
 "checksum quote 0.3.15 (registry+https://github.com/rust-lang/crates.io-index)" = "7a6e920b65c65f10b2ae65c831a81a073a89edd28c7cce89475bff467ab4167a"
