@@ -281,6 +281,15 @@ fn main() {
                     },
                 );
 
+                // 1st window implementation with RocksDB
+                if queries.iter().any(|x| *x == "window_1_rocksdb") {
+                    worker.dataflow::<_, _, _, RocksDBBackend(|scope, _| {
+                        ::nexmark::queries::window_1_rocksdb(&nexmark_input, nexmark_timer, scope)
+                            .probe_with(&mut probe);
+
+                    });
+                }
+
                 // Q0: Do nothing in particular.
                 if queries.iter().any(|x| *x == "q0") {
                     worker.dataflow::<_, _, _, FASTERBackend>(|scope, _| {
