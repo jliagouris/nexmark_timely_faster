@@ -281,12 +281,39 @@ fn main() {
                     },
                 );
 
+                // 1st window implementation with FASTER
+                if queries.iter().any(|x| *x == "window_1_faster") {
+                    // 60s windows, ticking in 1s intervals
+                    // NEXMark default is 60 minutes, ticking in one minute intervals
+                    let window_slice_count = 60;
+                    let window_slide_ns = 1_000_000_000;
+                    worker.dataflow::<_, _, _, FASTERBackend>(|scope, _| {
+                        ::nexmark::queries::window_1_faster(
+                            &nexmark_input,
+                            nexmark_timer,
+                            scope,
+                            window_slice_count,
+                            window_slide_ns,
+                        )
+                        .probe_with(&mut probe);
+                    });
+                }
+
                 // 1st window implementation with RocksDB
                 if queries.iter().any(|x| *x == "window_1_rocksdb") {
-                    worker.dataflow::<_, _, _, RocksDBBackend(|scope, _| {
-                        ::nexmark::queries::window_1_rocksdb(&nexmark_input, nexmark_timer, scope)
-                            .probe_with(&mut probe);
-
+                    // 60s windows, ticking in 1s intervals
+                    // NEXMark default is 60 minutes, ticking in one minute intervals
+                    let window_slice_count = 60;
+                    let window_slide_ns = 1_000_000_000;
+                    worker.dataflow::<_, _, _, RocksDBBackend>(|scope, _| {
+                        ::nexmark::queries::window_1_rocksdb(
+                            &nexmark_input,
+                            nexmark_timer,
+                            scope,
+                            window_slice_count,
+                            window_slide_ns,
+                        )
+                        .probe_with(&mut probe);
                     });
                 }
 

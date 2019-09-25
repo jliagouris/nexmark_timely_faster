@@ -5,6 +5,7 @@ authors = ["Matthew Brookes <brookesm@student.ethz.ch>"]
 edition = "2018"
 
 [dependencies]
+bincode = "1.2.0"
 abomonation = "^0.7"
 abomonation_derive = "0.3"
 clap = "*"
@@ -18,4 +19,4 @@ serde = "*"
 serde_derive = "*"
 serde_json = "*"
 streaming-harness = { version = "^0.1", features = ["hdrhist-support"] }
-timely = { git = "https://github.com/matthewbrookes/timely-dataflow.git", branch = "state_crate" }
+timely = { git = "https://github.com/jliagouris/timely-dataflow.git", branch = "state_crate" }
