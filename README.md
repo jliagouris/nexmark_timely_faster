@@ -1,6 +1,8 @@
-# NEXMark benchmark for Timely with FASTER
+# Window evaluation techniques with alternative state backends
 
-A lot of this implementation is derived from the implementation in [Megaphone](https://github.com/strymon-system/megaphone), mostly written by Moritz Hoffman and Frank McSherry.
+1. Record buffer
+2. Window buckets
+3. Panes
 
 ## Running a Query
 Each query can be run for a specified duration (in seconds) and with a given event generation rate
