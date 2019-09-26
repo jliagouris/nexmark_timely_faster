@@ -4,6 +4,14 @@
 2. Window buckets
 3. Panes
 
+## Install dependencies for faster-rs (ubuntu)
+
+```
+$ add-apt-repository -y ppa:ubuntu-toolchain-r/test
+$ apt update
+$ apt install -y g++-7 libaio-dev uuid-dev libtbb-dev
+```
+
 ## Running a Query
 Each query can be run for a specified duration (in seconds) and with a given event generation rate
 
