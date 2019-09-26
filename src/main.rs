@@ -326,7 +326,7 @@ fn main() {
 
                 // Q1: Convert bids to euros.
                 if queries.iter().any(|x| *x == "q1") {
-                    worker.dataflow::<_, _, _, FASTERBackend>(|scope, _| {
+                    worker.dataflow::<_, _, _, InMemoryNativeBackend>(|scope, _| {
                         ::nexmark::queries::q1(&nexmark_input, nexmark_timer, scope)
                             .probe_with(&mut probe);
                     });
@@ -849,9 +849,12 @@ fn main() {
                 if let Some(it) = input_times_gen.iter_until(target_ns) {
                     let input = input.as_mut().unwrap();
                     for _t in it {
-                        input.send(Event::create(events_so_far, &mut rng, &mut config));
+                        let event = Event::create(events_so_far, &mut rng, &mut config);
+                        //println!("Event timestamp: {:?}, epoch: {}", event.time(), target_ns as usize + count);
+                        input.send(event);
                         events_so_far += worker.peers();
                     }
+                    //println!("Epoch: {}", target_ns as usize + count);
                     input.advance_to(target_ns as usize + count);
                 } else {
                     input.take().unwrap();

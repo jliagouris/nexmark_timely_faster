@@ -24,6 +24,7 @@ mod q8;
 mod q8_managed;
 mod window_1_rocksdb;
 mod window_1_faster;
+mod window_2_faster;
 
 pub use self::q1::q1;
 pub use self::q2::q2;
