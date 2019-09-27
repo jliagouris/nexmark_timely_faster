@@ -29,32 +29,35 @@ pub fn window_1_faster<S: Scope<Timestamp = usize>>(
             "Accumulate records",
             None,
             move |input, output, notificator, state_handle| {
+                // Slide end timestamp -> event timestamps
                 let mut slide_index = state_handle.get_managed_map("slide_index");
+                // Event timestmaps -> auction ids
                 let mut window_contents = state_handle.get_managed_map("window_contents");
                 let mut buffer = Vec::new();
                 input.for_each(|time, data| {
-                    // Notify at end of this epoch
+                    // Notify at the end of this slide
                     let slide = (((time.time() / window_slide_ns) + 1) * window_slide_ns);
                     notificator.notify_at(time.delayed(&slide));
                     data.swap(&mut buffer);
                     for record in buffer.iter() {
-                        let _ = window_contents.insert(record.1, record.0);
-                        let _ = slide_index.rmw(slide, vec![record.1]);
+                        window_contents.insert(record.1, record.0);
+                        slide_index.rmw(slide, vec![record.1]);
                     }
                 });
 
                 notificator.for_each(|cap, _, _| {
-                    for i in 0..window_slice_count {
+                    for i in (0..window_slice_count).rev() {
                         let keys = slide_index.get(&((cap.time() - i) * window_slide_ns)).expect("Slide must exist");
-                        let timestamps = keys.as_ref();
-                        for timestamp in timestamps {
+                        for timestamp in keys.as_ref() {
                             let value = window_contents.get(timestamp).expect("Timestamp must exist");
-                            let record = value.as_ref();
-                            output.session(&cap).give((*timestamp, *record));
+                            output.session(&cap).give((*timestamp, *value.as_ref()));
                         }
                     }
-                    let keys_to_remove = slide_index.remove(&((cap.time() - window_slice_count) * window_slide_ns));
-                    // TODO (john): remove entries from window_contents
+                    // TODO (john): remove() doesn't actually remove entries from FASTER
+                    let keys_to_remove = slide_index.remove(&((cap.time() - window_slice_count) * window_slide_ns)).expect("Slide to remove must exist");
+                    for timestamp in keys_to_remove {
+                        let _ = window_contents.remove(&timestamp).expect("Timestamp to remove must exist");
+                    }
                 });
             },
         )

@@ -46,7 +46,7 @@ pub fn window_3_faster<S: Scope<Timestamp = usize>>(
                     for record in records.iter() {
                         output.session(&cap).give(record.clone());
                     }
-                    // Remove pane
+                    // TODO (john): remove() doesn't actually remove entries from FASTER
                     let pane = cap.time() - window_slice_count;
                     let _ = pane_buckets.remove(&cap.time()).expect("Pane to remove must exist");
                 });
