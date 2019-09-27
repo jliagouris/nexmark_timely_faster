@@ -58,7 +58,7 @@ pub fn window_2a_rocksdb<S: Scope<Timestamp = usize>>(
                             updated_contents.push((record.0, record.1));
                             let _ = match window_buckets.get(&win) {
                                 Some(contents) => {
-                                    let mut c = &*contents;
+                                    let c = &*contents;
                                     updated_contents.extend(c);
                                 },
                                 None => {},
