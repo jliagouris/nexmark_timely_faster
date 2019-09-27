@@ -326,7 +326,7 @@ fn main() {
 
                 // Q1: Convert bids to euros.
                 if queries.iter().any(|x| *x == "q1") {
-                    worker.dataflow::<_, _, _, InMemoryNativeBackend>(|scope, _| {
+                    worker.dataflow::<_, _, _, FASTERBackend>(|scope, _| {
                         ::nexmark::queries::q1(&nexmark_input, nexmark_timer, scope)
                             .probe_with(&mut probe);
                     });
