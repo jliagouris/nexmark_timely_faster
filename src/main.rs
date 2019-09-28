@@ -315,6 +315,23 @@ fn main() {
                     });
                 }
 
+                // 2nd window implementation with FASTER
+                if queries.iter().any(|x| *x == "window_2_faster") {
+                    // 5s windows, ticking in 1s intervals
+                    let window_slice_count = 5;
+                    let window_slide_ns = 1_000_000_000;
+                    worker.dataflow::<_, _, _, FASTERBackend>(|scope, _| {
+                        ::nexmark::queries::window_2_faster(
+                            &nexmark_input,
+                            nexmark_timer,
+                            scope,
+                            window_slice_count,
+                            window_slide_ns,
+                        )
+                            .probe_with(&mut probe);
+                    });
+                }
+
                 // Q0: Do nothing in particular.
                 if queries.iter().any(|x| *x == "q0") {
                     worker.dataflow::<_, _, _, FASTERBackend>(|scope, _| {
