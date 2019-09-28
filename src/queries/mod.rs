@@ -47,6 +47,9 @@ pub use self::q8::q8;
 pub use self::q8_managed::q8_managed;
 pub use self::window_1_rocksdb::window_1_rocksdb;
 pub use self::window_1_faster::window_1_faster;
+pub use self::window_2a_rocksdb::window_2a_rocksdb;
+pub use self::window_2_faster::window_2_faster;
+pub use self::window_3_faster::window_3_faster;
 
 pub struct NexmarkInput<'a> {
     pub bids: &'a Rc<EventLink<usize, Bid>>,
