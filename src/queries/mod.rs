@@ -11,9 +11,11 @@ mod window_1_faster_count;
 mod window_1_faster_rank;
 mod window_2_faster;
 mod window_2_faster_count;
+mod window_2_faster_rank;
 mod window_2a_rocksdb;
 mod window_3_faster;
 mod window_3_faster_count;
+mod window_3_faster_rank;
 
 pub use self::window_1_rocksdb::window_1_rocksdb;
 pub use self::window_2a_rocksdb::window_2a_rocksdb;
@@ -22,8 +24,10 @@ pub use self::window_1_faster_count::window_1_faster_count;
 pub use self::window_1_faster_rank::window_1_faster_rank;
 pub use self::window_2_faster::window_2_faster;
 pub use self::window_2_faster_count::window_2_faster_count;
+pub use self::window_2_faster_rank::window_2_faster_rank;
 pub use self::window_3_faster::window_3_faster;
 pub use self::window_3_faster_count::window_3_faster_count;
+pub use self::window_3_faster_rank::window_3_faster_rank;
 
 
 pub struct NexmarkInput<'a> {

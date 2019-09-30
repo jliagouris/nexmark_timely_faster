@@ -366,6 +366,23 @@ fn main() {
                     });
                 }
 
+                // 2nd window implementation with FASTER and RANK aggregation
+                if queries.iter().any(|x| *x == "window_2_faster_rank") {
+                    // 5s windows, ticking in 1s intervals
+                    let window_slice_count = 5;
+                    let window_slide_ns = 1_000_000_000;
+                    worker.dataflow::<_, _, _, FASTERBackend>(|scope, _| {
+                        ::nexmark::queries::window_2_faster_rank(
+                            &nexmark_input,
+                            nexmark_timer,
+                            scope,
+                            window_slice_count,
+                            window_slide_ns,
+                        )
+                            .probe_with(&mut probe);
+                    });
+                }
+
                 // 3rd window implementation with FASTER
                 if queries.iter().any(|x| *x == "window_3_faster") {
                     // 5s windows, ticking in 1s intervals
@@ -390,6 +407,23 @@ fn main() {
                     let window_slide_ns = 1_000_000_000;
                     worker.dataflow::<_, _, _, FASTERBackend>(|scope, _| {
                         ::nexmark::queries::window_3_faster_count(
+                            &nexmark_input,
+                            nexmark_timer,
+                            scope,
+                            window_slice_count,
+                            window_slide_ns,
+                        )
+                            .probe_with(&mut probe);
+                    });
+                }
+
+                // 3rd window implementation with FASTER and RANK aggregation
+                if queries.iter().any(|x| *x == "window_3_faster_rank") {
+                    // 5s windows, ticking in 1s intervals
+                    let window_slice_count = 5;
+                    let window_slide_ns = 1_000_000_000;
+                    worker.dataflow::<_, _, _, FASTERBackend>(|scope, _| {
+                        ::nexmark::queries::window_3_faster_rank(
                             &nexmark_input,
                             nexmark_timer,
                             scope,
