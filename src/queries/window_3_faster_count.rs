@@ -37,7 +37,7 @@ pub fn window_3_faster_count<S: Scope<Timestamp = usize>>(
                     for record in buffer.iter() {
                         let pane = ((record.1 / window_slide_ns) + 1) * window_slide_ns;  // Pane size equals slide size as window is a multiple of slide
                         //println!("Inserting record with time {:?} in pane {:?}", record.1, pane);
-                        pane_buckets.rmw(pane, vec![*record]);
+                        pane_buckets.rmw(pane, 1);
                     }
                 });
 
@@ -48,10 +48,8 @@ pub fn window_3_faster_count<S: Scope<Timestamp = usize>>(
                     for i in 0..window_slice_count {
                         let pane = cap.time() - window_slide_ns * i;
                         //println!("Lookup pane {:?}", &pane);
-                        if let Some(records) = pane_buckets.get(&pane) {
-                            for _record in records.iter() {
-                                count+=1;
-                            }
+                        if let Some(record) = pane_buckets.get(&pane) {
+                                count+=*record.as_ref();
                         } else {
                             println!("Processing pane {} of last window.", cap.time() - window_slide_ns * i);
                         }
