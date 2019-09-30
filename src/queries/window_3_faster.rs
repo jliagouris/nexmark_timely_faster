@@ -33,22 +33,38 @@ pub fn window_3_faster<S: Scope<Timestamp = usize>>(
                 let mut buffer = Vec::new();
                 input.for_each(|time, data| {
                     // Notify for this pane
-                    notificator.notify_at(time.delayed(&(((time.time() / window_slide_ns) + 1) * window_slide_ns)));
+                    let slide = (((time.time() / window_slide_ns) + 1) * window_slide_ns);
+                    //println!("Asking notification for end of window: {:?}", slide + (window_slide_ns * (window_slice_count - 1)));
+                    notificator.notify_at(time.delayed(&(slide + (window_slide_ns * (window_slice_count - 1)))));
                     data.swap(&mut buffer);
                     for record in buffer.iter() {
-                        let pane = record.1 / window_slide_ns;  // Pane size equals slide size as window is a multiple of slide
+                        let pane = ((record.1 / window_slide_ns) + 1) * window_slide_ns;  // Pane size equals slide size as window is a multiple of slide
+                        //println!("Inserting record with time {:?} in pane {:?}", record.1, pane);
                         pane_buckets.rmw(pane, vec![*record]);
                     }
                 });
 
                 notificator.for_each(|cap, _, _| {
-                    let records = pane_buckets.get(&cap.time()).expect("Pane must exist");
-                    for record in records.iter() {
-                        output.session(&cap).give(record.clone());
+                    //lookup all panes in the window
+                    //println!("Received notification for end of window {:?}", &(cap.time()));
+                    for i in 0..window_slice_count {
+                        let pane = cap.time() - window_slide_ns * i;
+                        //println!("Lookup pane {:?}", &pane);
+                        if let Some(records) = pane_buckets.get(&pane) {
+                            for record in records.iter() {
+                                //println!("Emitting record with timestamp {:?}", &record.1);
+                                output.session(&cap).give(record.clone());
+                            }
+                        } else {
+                                println!("Processing pane {} of last window.", cap.time() - window_slide_ns * i);
+                        }
+                        // remove the first slide of the fired window
+                        // TODO (john): remove() doesn't actually remove entries from FASTER
+                        if i == window_slice_count - 1 {
+                            //println!("Removing pane {:?}", pane);
+                            let _ = pane_buckets.remove(&pane).expect("Pane to remove must exist");
+                        }
                     }
-                    // TODO (john): remove() doesn't actually remove entries from FASTER
-                    let pane = cap.time() - window_slice_count;
-                    let _ = pane_buckets.remove(&cap.time()).expect("Pane to remove must exist");
                 });
             }
         )
