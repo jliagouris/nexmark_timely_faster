@@ -24,9 +24,12 @@ mod q8;
 mod q8_managed;
 mod window_1_rocksdb;
 mod window_1_faster;
+mod window_1_faster_count;
 mod window_2_faster;
+mod window_2_faster_count;
 mod window_2a_rocksdb;
 mod window_3_faster;
+mod window_3_faster_count;
 
 pub use self::q1::q1;
 pub use self::q2::q2;
@@ -46,10 +49,14 @@ pub use self::q7_managed::q7_managed;
 pub use self::q8::q8;
 pub use self::q8_managed::q8_managed;
 pub use self::window_1_rocksdb::window_1_rocksdb;
-pub use self::window_1_faster::window_1_faster;
 pub use self::window_2a_rocksdb::window_2a_rocksdb;
+pub use self::window_1_faster::window_1_faster;
+pub use self::window_1_faster_count::window_1_faster_count;
 pub use self::window_2_faster::window_2_faster;
+pub use self::window_2_faster_count::window_2_faster_count;
 pub use self::window_3_faster::window_3_faster;
+pub use self::window_3_faster_count::window_3_faster_count;
+
 
 pub struct NexmarkInput<'a> {
     pub bids: &'a Rc<EventLink<usize, Bid>>,
