@@ -1,10 +1,7 @@
-use std::collections::HashMap;
 use timely::dataflow::channels::pact::Exchange;
 use timely::dataflow::{Scope, Stream};
 
 use crate::queries::{NexmarkInput, NexmarkTimer};
-use crate ::event::Bid;
-use timely::state::backends::RocksDBBackend;
 use timely::dataflow::operators::generic::operator::Operator;
 use timely::dataflow::operators::map::Map;
 
@@ -16,7 +13,7 @@ pub fn assign_windows(event_time: usize,
     let last_window_start = (event_time / window_slide) * window_slide;
     let num_windows = ((window_size / window_slide) as f64).ceil();
     for i in 0..num_windows as usize {
-        let mut w_id = last_window_start - (i * window_slide);
+        let w_id = last_window_start - (i * window_slide);
         if event_time < w_id + window_size {
             windows.push(w_id);
         }

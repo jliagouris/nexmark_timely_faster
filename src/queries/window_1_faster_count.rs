@@ -1,13 +1,9 @@
-use std::collections::HashMap;
 use timely::dataflow::channels::pact::Exchange;
 use timely::dataflow::{Scope, Stream};
 
 use crate::queries::{NexmarkInput, NexmarkTimer};
-use faster_rs::FasterRmw;
 use timely::dataflow::operators::generic::operator::Operator;
 use timely::dataflow::operators::map::Map;
-use crate ::event::Bid;
-
 
 pub fn window_1_faster_count<S: Scope<Timestamp = usize>>(
     input: &NexmarkInput,
@@ -36,9 +32,9 @@ pub fn window_1_faster_count<S: Scope<Timestamp = usize>>(
                 let mut buffer = Vec::new();
                 input.for_each(|time, data| {
                     // Notify at the end of this slide
-                    let slide = (((time.time() / window_slide_ns) + 1) * window_slide_ns);
+                    let slide = ((time.time() / window_slide_ns) + 1) * window_slide_ns;
                     //println!("Asking notification for end of window: {:?}", slide + (window_slide_ns * (window_slice_count - 1)));
-                    notificator.notify_at(time.delayed(&(slide + (window_slide_ns * (window_slice_count - 1)))));
+                    notificator.notify_at(time.delayed(&(slide + window_slide_ns * (window_slice_count - 1))));
                     data.swap(&mut buffer);
                     for record in buffer.iter() {
                         window_contents.insert(record.1, record.0);

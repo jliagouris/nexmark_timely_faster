@@ -1,11 +1,8 @@
-use std::collections::HashMap;
 use timely::dataflow::channels::pact::Exchange;
 use timely::dataflow::{Scope, Stream};
 use bincode;
 
-use crate::event::Bid;
 use crate::queries::{NexmarkInput, NexmarkTimer};
-use timely::state::backends::RocksDBBackend;
 use timely::dataflow::operators::generic::operator::Operator;
 use timely::dataflow::operators::map::Map;
 
@@ -51,7 +48,7 @@ pub fn window_1_rocksdb<S: Scope<Timestamp = usize>>(
                     let window_start = window_end - (window_slide_ns * window_slice_count) ;  // First slide id
                     // TODO (john): Check if iterator works if key is not found, i.e. if it starts at the next key
                     {
-                        let mut window_iter = window_contents.iter(window_start); 
+                        let window_iter = window_contents.iter(window_start);
                         for (key, value) in window_iter {
                             let timestamp: usize = bincode::deserialize(key.as_ref()).expect("Cannot deserialize timestamp");
                             let auction_id: usize = bincode::deserialize(value.as_ref()).expect("Cannot deserialize auction id");
