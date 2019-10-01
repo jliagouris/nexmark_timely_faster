@@ -14,6 +14,9 @@ pub fn window_1_rocksdb<S: Scope<Timestamp = usize>>(
     window_slice_count: usize,
     window_slide_ns: usize,
 ) -> Stream<S, (usize, usize)> {
+    
+    let mut last_slide = std::usize::MAX;
+
     input
         .bids(scope)
         .map(move |b| {
@@ -28,39 +31,71 @@ pub fn window_1_rocksdb<S: Scope<Timestamp = usize>>(
             None,
             move |input, output, notificator, state_handle| {
                 let mut window_contents = state_handle.get_managed_map("window_contents");
+                let prefix_key_len: usize = window_contents.as_ref().get_key_prefix_length();
                 let mut buffer = Vec::new();
+
                 input.for_each(|time, data| {
-                    // Notify at end of this slide
-                    notificator.notify_at(
-                        time.delayed(&(((time.time() / window_slide_ns) + 1) * window_slide_ns)),
-                    );
+                    // The end timestamp of the slide the current epoch corresponds to
+                    let slide = ((time.time() / window_slide_ns) + 1) * window_slide_ns;
+                    let window_end = slide + window_slide_ns * (window_slice_count - 1);
+                    // println!("Asking notification for the end of window: {:?}", window_end);
+                    notificator.notify_at(time.delayed(&window_end));
+
+                    // Add window margins
+                    if last_slide != slide {
+                        println!("Inserting dummy record:: time: {:?}, value:{:?}", slide - window_slide_ns, 0);
+                        window_contents.insert(slide - window_slide_ns, 0);  // Start timestamp of window
+                        println!("Inserting dummy record:: time: {:?}, value:{:?}", window_end, 0);
+                        window_contents.insert(window_end, 0);  // End timestamp of window
+                        last_slide = slide;
+                    }
+                    // Add window contents
                     data.swap(&mut buffer);
                     for record in buffer.iter() {
                         let key = record.1; // Event time
                         let auction_id = record.0;
+                        // Add record 
+                        println!("Inserting window record:: time: {}, value:{}", key, auction_id);
                         window_contents.insert(key, auction_id);
                     }
                 });
 
                 notificator.for_each(|cap, _, _| {
-                    // The end of each slide is also the end of a window since the window is always a multiple of the slide
-                    let window_end = cap.time(); // Last slide id
-                    let window_start = window_end - (window_slide_ns * window_slice_count) ;  // First slide id
-                    // TODO (john): Check if iterator works if key is not found, i.e. if it starts at the next key
+                    let window_end = cap.time(); 
+                    let window_start = window_end - (window_slide_ns * window_slice_count);  
+                    let first_slide_end = window_start + window_slide_ns; // To know which records to delete
+                    println!("Start of window: {}", window_start);
+                    println!("End of window: {}", *window_end);
+                    println!("End of first slide: {}", first_slide_end);
+                    let mut to_delete = Vec::new();  // Keep keys to delete here
+                    to_delete.push(window_start);
                     {
-                        let window_iter = window_contents.iter(window_start);
-                        for (key, value) in window_iter {
-                            let timestamp: usize = bincode::deserialize(key.as_ref()).expect("Cannot deserialize timestamp");
-                            let auction_id: usize = bincode::deserialize(value.as_ref()).expect("Cannot deserialize auction id");
-                            output.session(&cap).give((timestamp, auction_id));
-                            if timestamp == *window_end {
+                        let mut window_iter = window_contents.iter(window_start);
+                        let _ = window_iter.next();  // Skip dummy record
+                        for (ser_key, ser_value) in window_iter {
+                            let k = &ser_key[prefix_key_len..];  // Ignore prefix
+                            let timestamp: usize = bincode::deserialize(unsafe {
+                                                        std::slice::from_raw_parts(k.as_ptr(), k.len())
+                                                    }).expect("Cannot deserialize timestamp");
+                            let auction_id: usize = bincode::deserialize(unsafe {
+                                                        std::slice::from_raw_parts(ser_value.as_ptr(), ser_value.len())
+                                                    }).expect("Cannot deserialize auction id");
+                            println!("Found record:: time: {}, value:{}", timestamp, auction_id);
+                            if timestamp == *window_end {  // Omit dummy record
                                 break;
+                            }
+                            //assert!(timestamp < *window_end);
+                            println!("Output record:: time: {}, value:{}", timestamp, auction_id);
+                            output.session(&cap).give((timestamp, auction_id));
+                            if timestamp < first_slide_end {
+                                to_delete.push(timestamp);
                             }
                         }
                     }
-                    // Purge state in [window_start - window_slide_ns, window_start)
-                    for ts in (window_start-window_slide_ns)..window_start {
-                        let _ = window_contents.remove(&ts).expect("Record to remove must exist");
+                    // Purge state of first slide in window
+                    for ts in to_delete {
+                        println!("Removing record:: time: {}", ts);
+                        window_contents.remove(&ts).expect("Record to remove must exist");
                     }
                 });
             },
