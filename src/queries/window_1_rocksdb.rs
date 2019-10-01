@@ -30,7 +30,7 @@ pub fn window_1_rocksdb<S: Scope<Timestamp = usize>>(
             "Accumulate records",
             None,
             move |input, output, notificator, state_handle| {
-                let mut window_contents = state_handle.get_managed_map(&"");
+                let mut window_contents = state_handle.get_managed_map("window_contents");
                 let prefix_key_len: usize = window_contents.as_ref().get_key_prefix_length();
                 let mut buffer = Vec::new();
 
