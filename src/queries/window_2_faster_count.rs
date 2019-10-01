@@ -62,7 +62,7 @@ pub fn window_2_faster_count<S: Scope<Timestamp = usize>>(
                 notificator.for_each(|cap, _, _| {
                     //println!("Firing and cleaning window with start timestamp {}.", cap.time() - window_size);
                     let count = window_buckets.remove(&(cap.time() - window_size)).expect("Must exist");
-                    println!("*** Window start: {}, count {}.", cap.time() - window_size, count);
+                    //println!("*** Window start: {}, count {}.", cap.time() - window_size, count);
                     output.session(&cap).give((*cap.time(), count));
                 });
             },

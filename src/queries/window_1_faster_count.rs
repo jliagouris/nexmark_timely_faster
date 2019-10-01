@@ -50,7 +50,6 @@ pub fn window_1_faster_count<S: Scope<Timestamp = usize>>(
                         //println!("Lookup slide {:?}", &(cap.time() - window_slide_ns * i));
                         if let Some(keys) = slide_index.get(&(cap.time() - window_slide_ns * i)) {
                             for timestamp in keys.as_ref() {
-                                //TODO: to compute the count we don't need to get() the records; we can simply get the timestamps from the index
                                 let _ = window_contents.get(timestamp).expect("Timestamp must exist");
                                 count+=1;
                             }
@@ -59,7 +58,7 @@ pub fn window_1_faster_count<S: Scope<Timestamp = usize>>(
                             println!("Processing slide {} of last window.", cap.time() - window_slide_ns * i);
                         }
                     }
-                    println!("*** End of window: {:?}, Count: {:?}", cap.time(), count);
+                    //println!("*** End of window: {:?}, Count: {:?}", cap.time(), count);
                     output.session(&cap).give((*cap.time(), count));
 
                     // TODO (john): remove() doesn't actually remove entries from FASTER

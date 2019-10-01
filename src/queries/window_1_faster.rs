@@ -46,7 +46,6 @@ pub fn window_1_faster<S: Scope<Timestamp = usize>>(
                 });
 
                 notificator.for_each(|cap, _, _| {
-                    //TODO: the end of the first window_slice_count-1 slides are not window ends
                     //println!("End of window: {:?}", cap.time());
                     for i in 0..window_slice_count {
                         //println!("Lookup slide {:?}", &(cap.time() - window_slide_ns * i));

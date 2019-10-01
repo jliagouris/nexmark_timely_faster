@@ -77,7 +77,7 @@ pub fn window_3_faster_rank<S: Scope<Timestamp = usize>>(
                         }
                         count+=1;
                         output.session(&cap).give((*cap.time(), *record, rank));
-                        println!("*** End of window: {:?}, Auction: {:?}, Rank: {:?}", cap.time(), record, rank);
+                        //println!("*** End of window: {:?}, Auction: {:?}, Rank: {:?}", cap.time(), record, rank);
                     }
                 });
             }

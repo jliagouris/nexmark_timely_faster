@@ -74,7 +74,7 @@ pub fn window_1_faster_rank<S: Scope<Timestamp = usize>>(
                         }
                         count+=1;
                         output.session(&cap).give((*cap.time(), auction, rank));
-                        println!("*** End of window: {:?}, Auction: {:?}, Rank: {:?}", cap.time(), auction, rank);
+                        //println!("*** End of window: {:?}, Auction: {:?}, Rank: {:?}", cap.time(), auction, rank);
                     }
                     // TODO (john): remove() doesn't actually remove entries from FASTER
                     //println!("Removing slide {:?}", &(cap.time() - (window_slice_count - 1) * window_slide_ns));

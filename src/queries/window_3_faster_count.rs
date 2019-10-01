@@ -60,7 +60,7 @@ pub fn window_3_faster_count<S: Scope<Timestamp = usize>>(
                             let _ = pane_buckets.remove(&pane).expect("Pane to remove must exist");
                         }
                     }
-                    println!("*** End of window: {:?}, Count: {:?}", cap.time(), count);
+                    //println!("*** End of window: {:?}, Count: {:?}", cap.time(), count);
                     output.session(&cap).give((*cap.time(), count));
                 });
             }
