@@ -20,6 +20,10 @@ Queries have three varieties. To run using "vanilla" Timely simply supply the qu
 $ cargo run --release -- --duration 1000 --rate 1000000 --queries q3_faster
 ```
 
+### Window parameters
+- `window-slide`: the size of the window slide in s
+- `window-slice-count`: the number of slides in a window, i.e. the window size in s is `window-slide*window-slice-count`
+
 ## Running on multiple workers/processes
 Timely Dataflow accepts configuration via arguments supplied at runtime. These can be passed by adding an extra `--` between the line above and Timely's arguments.
 

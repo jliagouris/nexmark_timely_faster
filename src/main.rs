@@ -97,7 +97,7 @@ fn verify<S: Scope, T: ExchangeData + Ord + ::std::fmt::Debug>(
 }
 
 fn main() {
-    let matches = App::new("word_count")
+    let matches = App::new("window_evaluation")
         .arg(
             Arg::with_name("rate")
                 .long("rate")
@@ -107,6 +107,18 @@ fn main() {
         .arg(
             Arg::with_name("duration")
                 .long("duration")
+                .takes_value(true)
+                .required(true),
+        )
+        .arg(
+            Arg::with_name("window-slice-count")
+                .long("window-slice-count")
+                .takes_value(true)
+                .required(true),
+        )
+        .arg(
+            Arg::with_name("window-slide")
+                .long("window-slide")
                 .takes_value(true)
                 .required(true),
         )
@@ -155,6 +167,19 @@ fn main() {
         .expect("duration absent")
         .parse::<u64>()
         .expect("couldn't parse duration")
+        * 1_000_000_000;
+
+    let window_slice_count: usize = matches
+        .value_of("window-slice-count")
+        .expect("window slice count absent")
+        .parse::<usize>()
+        .expect("couldn't parse window slice count");
+
+    let window_slide_ns: usize = matches
+        .value_of("window-slide")
+        .expect("window slide absent")
+        .parse::<usize>()
+        .expect("couldn't parse window slide")
         * 1_000_000_000;
 
     let queries: Vec<_> = matches
@@ -283,9 +308,6 @@ fn main() {
 
                 // 1st window implementation with FASTER
                 if queries.iter().any(|x| *x == "window_1_faster") {
-                    // 5s windows, ticking in 1s intervals
-                    let window_slice_count = 5;
-                    let window_slide_ns = 1_000_000_000;
                     worker.dataflow::<_, _, _, FASTERBackend>(|scope, _| {
                         ::nexmark::queries::window_1_faster(
                             &nexmark_input,
@@ -300,9 +322,6 @@ fn main() {
 
                 // 1st window implementation with FASTER and COUNT aggregation
                 if queries.iter().any(|x| *x == "window_1_faster_count") {
-                    // 5s windows, ticking in 1s intervals
-                    let window_slice_count = 5;
-                    let window_slide_ns = 1_000_000_000;
                     worker.dataflow::<_, _, _, FASTERBackend>(|scope, _| {
                         ::nexmark::queries::window_1_faster_count(
                             &nexmark_input,
@@ -317,9 +336,6 @@ fn main() {
 
                 // 1st window implementation with FASTER and RANK aggregation
                 if queries.iter().any(|x| *x == "window_1_faster_rank") {
-                    // 5s windows, ticking in 1s intervals
-                    let window_slice_count = 5;
-                    let window_slide_ns = 1_000_000_000;
                     worker.dataflow::<_, _, _, FASTERBackend>(|scope, _| {
                         ::nexmark::queries::window_1_faster_rank(
                             &nexmark_input,
@@ -334,9 +350,6 @@ fn main() {
 
                 // 2nd window implementation with FASTER
                 if queries.iter().any(|x| *x == "window_2_faster") {
-                    // 5s windows, ticking in 1s intervals
-                    let window_slice_count = 5;
-                    let window_slide_ns = 1_000_000_000;
                     worker.dataflow::<_, _, _, FASTERBackend>(|scope, _| {
                         ::nexmark::queries::window_2_faster(
                             &nexmark_input,
@@ -351,9 +364,6 @@ fn main() {
 
                 // 2nd window implementation with FASTER and COUNT aggregation
                 if queries.iter().any(|x| *x == "window_2_faster_count") {
-                    // 5s windows, ticking in 1s intervals
-                    let window_slice_count = 5;
-                    let window_slide_ns = 1_000_000_000;
                     worker.dataflow::<_, _, _, FASTERBackend>(|scope, _| {
                         ::nexmark::queries::window_2_faster_count(
                             &nexmark_input,
@@ -368,9 +378,6 @@ fn main() {
 
                 // 2nd window implementation with FASTER and RANK aggregation
                 if queries.iter().any(|x| *x == "window_2_faster_rank") {
-                    // 5s windows, ticking in 1s intervals
-                    let window_slice_count = 5;
-                    let window_slide_ns = 1_000_000_000;
                     worker.dataflow::<_, _, _, FASTERBackend>(|scope, _| {
                         ::nexmark::queries::window_2_faster_rank(
                             &nexmark_input,
@@ -385,9 +392,6 @@ fn main() {
 
                 // 3rd window implementation with FASTER
                 if queries.iter().any(|x| *x == "window_3_faster") {
-                    // 5s windows, ticking in 1s intervals
-                    let window_slice_count = 5;
-                    let window_slide_ns = 1_000_000_000;
                     worker.dataflow::<_, _, _, FASTERBackend>(|scope, _| {
                         ::nexmark::queries::window_3_faster(
                             &nexmark_input,
@@ -402,9 +406,6 @@ fn main() {
 
                 // 3rd window implementation with FASTER and COUNT aggregation
                 if queries.iter().any(|x| *x == "window_3_faster_count") {
-                    // 5s windows, ticking in 1s intervals
-                    let window_slice_count = 5;
-                    let window_slide_ns = 1_000_000_000;
                     worker.dataflow::<_, _, _, FASTERBackend>(|scope, _| {
                         ::nexmark::queries::window_3_faster_count(
                             &nexmark_input,
@@ -419,9 +420,6 @@ fn main() {
 
                 // 3rd window implementation with FASTER and RANK aggregation
                 if queries.iter().any(|x| *x == "window_3_faster_rank") {
-                    // 5s windows, ticking in 1s intervals
-                    let window_slice_count = 5;
-                    let window_slide_ns = 1_000_000_000;
                     worker.dataflow::<_, _, _, FASTERBackend>(|scope, _| {
                         ::nexmark::queries::window_3_faster_rank(
                             &nexmark_input,
@@ -436,9 +434,6 @@ fn main() {
 
                 // 1st window implementation with RocksDB
                 if queries.iter().any(|x| *x == "window_1_rocksdb") {
-                    // 5s windows, ticking in 1s intervals
-                    let window_slice_count = 5;
-                    let window_slide_ns = 1_000_000_000;
                     worker.dataflow::<_, _, _, RocksDBBackend>(|scope, _| {
                         ::nexmark::queries::window_1_rocksdb(
                             &nexmark_input,
