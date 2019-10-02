@@ -13,7 +13,7 @@ pub fn window_3a_rocksdb<S: Scope<Timestamp = usize>>(
     window_slide_ns: usize,
 ) -> Stream<S, (usize, usize)> {
 
-    let mut first_pane = true;
+    let mut max_window_seen = 0;
 
     input
         .bids(scope)
@@ -36,19 +36,21 @@ pub fn window_3a_rocksdb<S: Scope<Timestamp = usize>>(
                     // The end timestamp of the slide/pane the current epoch corresponds to
                     let slide = ((time.time() / window_slide_ns) + 1) * window_slide_ns;
                     let window_end = slide + (window_slide_ns * (window_slice_count - 1));
-                    // println!("Asking notification for end of window: {:?}", window_end);
+                    //println!("Asking notification for end of window: {:?}", window_end);
                     notificator.notify_at(time.delayed(&window_end));
-                    // Add window margins
-                    if first_pane {
-                        // NOTE: This assumes that we get an epoch for each slide after the first slide seen
-                        // println!("Inserting dummy record:: time: {:?}", slide - window_slide_ns);
-                        pane_buckets.insert((slide - window_slide_ns).to_be(), vec![]); 
-                        first_pane = false;
+                    // Add window margins so that iterator is always valid
+                    if max_window_seen <= slide {
+                        let end = slide + window_slide_ns;
+                        for window_start in (max_window_seen..end).step_by(window_slide_ns) {
+                            //println!("First PUT operation for window start: {:?}", window_start);
+                            pane_buckets.insert(window_start.to_be(), vec![]);  // Initialize window state
+                        }
+                        max_window_seen = end;
                     }
                     data.swap(&mut buffer);
                     for record in buffer.iter() {
                         let pane = ((record.1 / window_slide_ns) + 1) * window_slide_ns;  // Pane size equals slide size as window is a multiple of slide
-                        // println!("Inserting record with time {:?} in pane {:?}", record.1, pane);
+                        //println!("Inserting record with time {:?} in pane {:?}", record.1, pane);
                         pane_buckets.rmw(pane.to_be(), vec![*record]);
                     }
                 });
@@ -76,14 +78,14 @@ pub fn window_3a_rocksdb<S: Scope<Timestamp = usize>>(
                             if timestamp > *window_end {  // Outside window
                                 break;
                             }
-                            // println!("Output records for pane with end timestamp {}: {:?}", timestamp, records);
+                             //println!("Output records for pane with end timestamp {}: {:?}", timestamp, records);
                             for record in records {
                                 output.session(&cap).give(record.clone());
                             }
                         }
                     }
                     // Purge state of first slide/pane in window
-                    // println!("Removing pane with end timestamp time: {}", ts);
+                    //println!("Removing pane with end timestamp time: {}", first_pane_end);
                     pane_buckets.remove(&first_pane_end.to_be()).expect("Pane to remove must exist");
                 });
             }

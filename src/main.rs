@@ -489,7 +489,7 @@ fn main() {
                 }
 
                 // 3rd window implementation with RocksDB using merge
-                if queries.iter().any(|x| *x == "window_3a_rocksdb") {
+                if queries.iter().any(|x| *x == "window_3b_rocksdb") {
                     worker.dataflow::<_, _, _, RocksDBMergeBackend>(|scope, _| {
                         ::nexmark::queries::window_3b_rocksdb(
                             &nexmark_input,
@@ -656,7 +656,7 @@ fn main() {
         }
     }
 
-    if let Some(output_file) = timeline_output {
+    /*if let Some(output_file) = timeline_output {
         let mut f = File::create(output_file).expect("Cannot open timeline output file");
         f.write(::streaming_harness::format::format_summary_timeline(
                 "summary_timeline".to_string(),
@@ -670,5 +670,5 @@ fn main() {
                 timeline.clone()
             )
         );
-    }
+    }*/
 }
