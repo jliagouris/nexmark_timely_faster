@@ -1,5 +1,3 @@
-use std::collections::HashSet;
-
 use timely::dataflow::channels::pact::Exchange;
 use timely::dataflow::{Scope, Stream};
 
@@ -32,8 +30,7 @@ pub fn window_2b_rocksdb<S: Scope<Timestamp = usize>>(
     window_slide_ns: usize,
 ) -> Stream<S, (usize, usize)> {
 
-    // Keeps the start timestamp of each window seen
-    let mut windows_seen = HashSet::new();
+    let mut max_window_seen = 0;
 
     input
         .bids(scope)
@@ -54,21 +51,23 @@ pub fn window_2b_rocksdb<S: Scope<Timestamp = usize>>(
                 let mut buffer = Vec::new();
                 input.for_each(|time, data| {
                     data.swap(&mut buffer);
+                    // The end timestamp of the slide the current epoch corresponds to
+                    let slide = ((time.time() / window_slide_ns) + 1) * window_slide_ns;
+                    if max_window_seen < slide {
+                        // NOTE: This assumes that we get an epoch for each slide after the first slide seen
+                        let window_start = slide - window_slide_ns;
+                        // Merging in RocksDB needs a first 'put' operation to work properly
+                        window_buckets.insert(window_start.to_be(), vec![]);  // Initialize window state
+                        max_window_seen = slide;
+                    }
                     for record in buffer.iter() {
                         let windows = assign_windows(record.1, window_slide_ns, window_size);
                         for win in windows {
                             // Notify at end of this window
                             notificator.notify_at(time.delayed(&(win + window_size)));
                             // println!("Asking notification for end of window: {:?}", win + window_size);
-                            if windows_seen.insert(win.to_be()) { 
-                                // Merging in RocksDB needs a first 'put' operation to work properly
-                                window_buckets.insert(win.to_be(), vec![*record]);
-                                // println!("Adding record with timestamp {} to window with start timestamp {}.", record.1, win);
-                            }
-                            else { // Window has already been seen
-                                window_buckets.rmw(win.to_be(), vec![*record]);
-                                // println!("Appending record with timestamp {} to window with start timestamp {}.", record.1, win);
-                            }
+                            window_buckets.rmw(win.to_be(), vec![*record]);
+                            // println!("Appending record with timestamp {} to window with start timestamp {}.", record.1, win);
                         }
                     }
                 });
@@ -77,7 +76,6 @@ pub fn window_2b_rocksdb<S: Scope<Timestamp = usize>>(
                     // println!("Firing and cleaning window with start timestamp {}.", cap.time() - window_size);
                     let start_timestamp = cap.time() - window_size;
                     let records = window_buckets.remove(&start_timestamp.to_be()).expect("Must exist");
-                    windows_seen.remove(&start_timestamp.to_be());  // Remove window id from hash set
                     // println!("*** Window start: {}, contents {:?}.", cap.time() - window_size, records);
                     for record in records.iter() {
                         output.session(&cap).give(record.clone());

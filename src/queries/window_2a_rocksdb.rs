@@ -21,6 +21,7 @@ pub fn assign_windows(event_time: usize,
     windows
 }
 
+// 2nd window implementation using put + merge
 pub fn window_2a_rocksdb<S: Scope<Timestamp = usize>>(
     input: &NexmarkInput,
     _nt: NexmarkTimer,

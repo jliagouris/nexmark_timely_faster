@@ -1,5 +1,3 @@
-use std::collections::HashSet;
-
 use timely::dataflow::channels::pact::Exchange;
 use timely::dataflow::{Scope, Stream};
 
@@ -15,8 +13,7 @@ pub fn window_3b_rocksdb<S: Scope<Timestamp = usize>>(
     window_slide_ns: usize,
 ) -> Stream<S, (usize, usize)> {
 
-    let mut last_slide = std::usize::MAX;
-    let mut panes_seen = HashSet::new();
+    let mut first_pane = true;
 
     input
         .bids(scope)
@@ -42,32 +39,27 @@ pub fn window_3b_rocksdb<S: Scope<Timestamp = usize>>(
                     // println!("Asking notification for end of window: {:?}", window_end);
                     notificator.notify_at(time.delayed(&window_end));
                     // Add window margins
-                    if std::usize::MAX > slide { // Add a dummy record to be used as the starting point of the iteration
+                    if first_pane {
+                        // NOTE: This assumes that we get an epoch for each slide after the first slide seen
                         // println!("Inserting dummy record:: time: {:?}, value:{:?}", slide - window_slide_ns, 0);
-                        pane_buckets.insert((slide - window_slide_ns).to_be(), vec![]);  // Start timestamp of the first window
-                        last_slide = slide;
+                        pane_buckets.insert((slide - window_slide_ns).to_be(), vec![]);  
+                        first_pane = false;
                     }
                     data.swap(&mut buffer);
                     for record in buffer.iter() {
                         let pane = ((record.1 / window_slide_ns) + 1) * window_slide_ns;  // Pane size equals slide size as window is a multiple of slide
-                        if panes_seen.insert(pane.to_be()) { 
-                            // Merging in RocksDB needs a first 'put' operation to work properly
-                            pane_buckets.insert(pane.to_be(), vec![*record]);
-                        }
-                        else {
-                            // println!("Inserting record with time {:?} in pane {:?}", record.1, pane);
-                            pane_buckets.rmw(pane.to_be(), vec![*record]);
-                        }
+                        // println!("Inserting record with time {:?} in pane {:?}", record.1, pane);
+                        pane_buckets.rmw(pane.to_be(), vec![*record]);
                     }
                 });
 
                 notificator.for_each(|cap, _, _| {
                     let window_end = cap.time(); 
                     let window_start = window_end - (window_slide_ns * window_slice_count);  
-                    let first_slide_end = window_start + window_slide_ns; // To know which records to delete
+                    let first_pane_end = window_start + window_slide_ns; // To know which records to delete
                     // println!("Start of window: {}", window_start);
                     // println!("End of window: {}", *window_end);
-                    // println!("End of first slide: {}", first_slide_end);
+                    // println!("End of first slide: {}", first_pane_end);
                     {// Iterate over the panes belonging to the current window
                         let mut window_iter = pane_buckets.iter(window_start.to_be());
                         let _ = window_iter.next();  // Skip first pane
@@ -84,7 +76,6 @@ pub fn window_3b_rocksdb<S: Scope<Timestamp = usize>>(
                             if timestamp > *window_end {  // Outside window
                                 break;
                             }
-                            assert!(timestamp < *window_end);
                             // println!("Output records for pane with end timestamp {}: {:?}", timestamp, records);
                             for record in records {
                                 output.session(&cap).give(record.clone());
@@ -93,7 +84,7 @@ pub fn window_3b_rocksdb<S: Scope<Timestamp = usize>>(
                     }
                     // Purge state of first slide/pane in window
                     // println!("Removing pane with end timestamp time: {}", ts);
-                    pane_buckets.remove(&first_slide_end.to_be()).expect("Pane to remove must exist");
+                    pane_buckets.remove(&first_pane_end.to_be()).expect("Pane to remove must exist");
                 });
             }
         )
