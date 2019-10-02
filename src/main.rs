@@ -31,7 +31,7 @@ use timely::dataflow::operators::Operator;
 use timely::dataflow::Scope;
 use timely::dataflow::Stream;
 use timely::state::backends::{
-    FASTERBackend, InMemoryBackend, RocksDBBackend
+    FASTERBackend, InMemoryBackend, RocksDBBackend, RocksDBMergeBackend
 };
 use timely::ExchangeData;
 
@@ -445,6 +445,62 @@ fn main() {
                         .probe_with(&mut probe);
                     });
                 }
+
+                // 2nd window implementation with RocksDB using put + get
+                if queries.iter().any(|x| *x == "window_2a_rocksdb") {
+                    worker.dataflow::<_, _, _, RocksDBBackend>(|scope, _| {
+                        ::nexmark::queries::window_2a_rocksdb(  // Same implementation with FASTER
+                            &nexmark_input,
+                            nexmark_timer,
+                            scope,
+                            window_slice_count,
+                            window_slide_ns,
+                        )
+                        .probe_with(&mut probe);
+                    });
+                }
+
+                // 2nd window implementation with RocksDB using merge
+                if queries.iter().any(|x| *x == "window_2b_rocksdb") {
+                    worker.dataflow::<_, _, _, RocksDBMergeBackend>(|scope, _| {
+                        ::nexmark::queries::window_2b_rocksdb(
+                            &nexmark_input,
+                            nexmark_timer,
+                            scope,
+                            window_slice_count,
+                            window_slide_ns,
+                        )
+                        .probe_with(&mut probe);
+                    });
+                }
+
+                // 3rd window implementation with RocksDB using put + get
+                if queries.iter().any(|x| *x == "window_3a_rocksdb") {
+                    worker.dataflow::<_, _, _, RocksDBBackend>(|scope, _| {
+                        ::nexmark::queries::window_3a_rocksdb(
+                            &nexmark_input,
+                            nexmark_timer,
+                            scope,
+                            window_slice_count,
+                            window_slide_ns,
+                        )
+                        .probe_with(&mut probe);
+                    });
+                }
+
+                // 3rd window implementation with RocksDB using merge
+                if queries.iter().any(|x| *x == "window_3a_rocksdb") {
+                    worker.dataflow::<_, _, _, RocksDBMergeBackend>(|scope, _| {
+                        ::nexmark::queries::window_3b_rocksdb(
+                            &nexmark_input,
+                            nexmark_timer,
+                            scope,
+                            window_slice_count,
+                            window_slide_ns,
+                        )
+                        .probe_with(&mut probe);
+                    });
+                }                
             }
 
             let mut config1 = nexmark::config::Config::new();
