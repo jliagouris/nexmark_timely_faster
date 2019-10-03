@@ -446,6 +446,20 @@ fn main() {
                     });
                 }
 
+                // 1st window implementation with RocksDB and COUNT aggregation
+                if queries.iter().any(|x| *x == "window_1_rocksdb_count") {
+                    worker.dataflow::<_, _, _, RocksDBBackend>(|scope, _| {
+                        ::nexmark::queries::window_1_rocksdb_count(
+                            &nexmark_input,
+                            nexmark_timer,
+                            scope,
+                            window_slice_count,
+                            window_slide_ns,
+                        )
+                            .probe_with(&mut probe);
+                    });
+                }
+
                 // 2nd window implementation with RocksDB using put + get
                 if queries.iter().any(|x| *x == "window_2a_rocksdb") {
                     worker.dataflow::<_, _, _, RocksDBBackend>(|scope, _| {
@@ -656,7 +670,7 @@ fn main() {
         }
     }
 
-    /*if let Some(output_file) = timeline_output {
+    if let Some(output_file) = timeline_output {
         let mut f = File::create(output_file).expect("Cannot open timeline output file");
         f.write(::streaming_harness::format::format_summary_timeline(
                 "summary_timeline".to_string(),
@@ -670,5 +684,5 @@ fn main() {
                 timeline.clone()
             )
         );
-    }*/
+    }
 }
