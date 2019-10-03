@@ -31,7 +31,7 @@ use timely::dataflow::operators::Operator;
 use timely::dataflow::Scope;
 use timely::dataflow::Stream;
 use timely::state::backends::{
-    FASTERBackend, InMemoryBackend, RocksDBBackend, RocksDBMergeBackend
+    FASTERBackend, InMemoryBackend, RocksDBBackend, RocksDBMergeBackend, RocksDBMergeBackend2
 };
 use timely::ExchangeData;
 
@@ -499,6 +499,20 @@ fn main() {
                             window_slide_ns,
                         )
                         .probe_with(&mut probe);
+                    });
+                }
+
+                // 2nd window implementation with RocksDB using merge and COUNT
+                if queries.iter().any(|x| *x == "window_2b_rocksdb_count") {
+                    worker.dataflow::<_, _, _, RocksDBMergeBackend2>(|scope, _| {
+                        ::nexmark::queries::window_2b_rocksdb_count(
+                            &nexmark_input,
+                            nexmark_timer,
+                            scope,
+                            window_slice_count,
+                            window_slide_ns,
+                        )
+                            .probe_with(&mut probe);
                     });
                 }
 
