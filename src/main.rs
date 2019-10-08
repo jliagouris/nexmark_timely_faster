@@ -627,6 +627,20 @@ fn main() {
                             .probe_with(&mut probe);
                     });
                 }
+
+                // 3rd window implementation with RocksDB using merge and COUNT
+                if queries.iter().any(|x| *x == "window_3b_rocksdb_rank") {
+                    worker.dataflow::<_, _, _, RocksDBMergeBackend>(|scope, _| {
+                        ::nexmark::queries::window_3b_rocksdb_rank(
+                            &nexmark_input,
+                            nexmark_timer,
+                            scope,
+                            window_slice_count,
+                            window_slide_ns,
+                        )
+                            .probe_with(&mut probe);
+                    });
+                }
             }
 
             let mut config1 = nexmark::config::Config::new();

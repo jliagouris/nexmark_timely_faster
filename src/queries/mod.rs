@@ -26,6 +26,7 @@ mod window_3a_rocksdb_count;
 mod window_3a_rocksdb_rank;
 mod window_3b_rocksdb;
 mod window_3b_rocksdb_count;
+mod window_3b_rocksdb_rank;
 mod window_3_faster_count;
 mod window_3_faster_rank;
 
@@ -43,6 +44,7 @@ pub use self::window_3a_rocksdb_count::window_3a_rocksdb_count;
 pub use self::window_3a_rocksdb_rank::window_3a_rocksdb_rank;
 pub use self::window_3b_rocksdb::window_3b_rocksdb;
 pub use self::window_3b_rocksdb_count::window_3b_rocksdb_count;
+pub use self::window_3b_rocksdb_rank::window_3b_rocksdb_rank;
 pub use self::window_1_faster::window_1_faster;
 pub use self::window_1_faster_count::window_1_faster_count;
 pub use self::window_1_faster_rank::window_1_faster_rank;
