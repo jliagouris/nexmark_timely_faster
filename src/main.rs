@@ -460,6 +460,20 @@ fn main() {
                     });
                 }
 
+                // 1st window implementation with RocksDB and RANK aggregation
+                if queries.iter().any(|x| *x == "window_1_rocksdb_rank") {
+                    worker.dataflow::<_, _, _, RocksDBBackend>(|scope, _| {
+                        ::nexmark::queries::window_1_rocksdb_rank(
+                            &nexmark_input,
+                            nexmark_timer,
+                            scope,
+                            window_slice_count,
+                            window_slide_ns,
+                        )
+                            .probe_with(&mut probe);
+                    });
+                }
+
                 // 2nd window implementation with RocksDB using put + get
                 if queries.iter().any(|x| *x == "window_2a_rocksdb") {
                     worker.dataflow::<_, _, _, RocksDBBackend>(|scope, _| {

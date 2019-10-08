@@ -11,6 +11,7 @@ mod window_1_faster_rank;
 mod window_2_faster;
 mod window_1_rocksdb;
 mod window_1_rocksdb_count;
+mod window_1_rocksdb_rank;
 mod window_2a_rocksdb;
 mod window_2a_rocksdb_count;
 mod window_2b_rocksdb;
@@ -27,6 +28,7 @@ mod window_3_faster_rank;
 
 pub use self::window_1_rocksdb::window_1_rocksdb;
 pub use self::window_1_rocksdb_count::window_1_rocksdb_count;
+pub use self::window_1_rocksdb_rank::window_1_rocksdb_rank;
 pub use self::window_2a_rocksdb::window_2a_rocksdb;
 pub use self::window_2a_rocksdb_count::window_2a_rocksdb_count;
 pub use self::window_2b_rocksdb::window_2b_rocksdb;

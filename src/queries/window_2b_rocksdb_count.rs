@@ -56,7 +56,7 @@ pub fn window_2b_rocksdb_count<S: Scope<Timestamp = usize>>(
                     if max_window_seen < slide {
                         for window_start in (max_window_seen..slide).step_by(window_slide_ns) {
                             // Merging in RocksDB needs a first 'put' operation to work properly
-                            //println!("First PUT operation for window start: {:?}", window_start);
+                            // println!("First PUT operation for window start: {:?}", window_start);
                             window_buckets.insert(window_start.to_be(), 0);  // Initialize window state
                         }
                         max_window_seen = slide;
@@ -66,9 +66,9 @@ pub fn window_2b_rocksdb_count<S: Scope<Timestamp = usize>>(
                         for win in windows {
                             // Notify at end of this window
                             notificator.notify_at(time.delayed(&(win + window_size)));
-                            //println!("Asking notification for end of window: {:?}", win + window_size);
+                            // println!("Asking notification for end of window: {:?}", win + window_size);
                             window_buckets.rmw(win, 1);
-                            //println!("Appending record with timestamp {} to window with start timestamp {}.", record.1, win);
+                            // println!("Appending record with timestamp {} to window with start timestamp {}.", record.1, win);
                         }
                     }
                 });
@@ -77,7 +77,7 @@ pub fn window_2b_rocksdb_count<S: Scope<Timestamp = usize>>(
                     // println!("Firing and cleaning window with start timestamp {}.", cap.time() - window_size);
                     let start_timestamp = cap.time() - window_size;
                     let count = window_buckets.remove(&start_timestamp).expect("Must exist");
-                    //println!("*** Window start: {}, count {}.", cap.time() - window_size, count);
+                    // println!("*** Window start: {}, count {}.", cap.time() - window_size, count);
                     output.session(&cap).give((*cap.time(), count));
                 });
             },
