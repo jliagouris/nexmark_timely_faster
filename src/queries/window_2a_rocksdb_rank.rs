@@ -65,7 +65,7 @@ pub fn window_2a_rocksdb_rank<S: Scope<Timestamp = usize>>(
                     let start_timestamp = cap.time() - window_size;
                     let mut records = window_buckets.remove(&start_timestamp).expect("Must exist");
                     // Apply the rank function to the window
-                    records.sort_unstable(); // Sort auctions by id
+                    records.sort_unstable_by(|a, b| a.0.cmp(&b.0)); // Sort auctions by id
                     let mut rank = 1;
                     let mut count = 0;
                     let mut current_record = records[0];
