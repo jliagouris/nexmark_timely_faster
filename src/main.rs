@@ -586,6 +586,20 @@ fn main() {
                     });
                 }
 
+                // 3rd window implementation with RocksDB using put + get and COUNT
+                if queries.iter().any(|x| *x == "window_3a_rocksdb_rank") {
+                    worker.dataflow::<_, _, _, RocksDBBackend>(|scope, _| {
+                        ::nexmark::queries::window_3a_rocksdb_rank(
+                            &nexmark_input,
+                            nexmark_timer,
+                            scope,
+                            window_slice_count,
+                            window_slide_ns,
+                        )
+                            .probe_with(&mut probe);
+                    });
+                }
+
                 // 3rd window implementation with RocksDB using merge
                 if queries.iter().any(|x| *x == "window_3b_rocksdb") {
                     worker.dataflow::<_, _, _, RocksDBMergeBackend>(|scope, _| {
