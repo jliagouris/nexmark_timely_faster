@@ -12,6 +12,9 @@ pub fn window_1_faster_count<S: Scope<Timestamp = usize>>(
     window_slice_count: usize,
     window_slide_ns: usize,
 ) -> Stream<S, (usize, usize)> {
+
+    let mut last_slide_seen = 0;
+    
     input
         .bids(scope)
         .map(move |b| {
