@@ -14,7 +14,7 @@ pub fn window_3_faster_rank<S: Scope<Timestamp = usize>>(
 ) -> Stream<S, (usize, usize, usize)> {
 
     let mut last_slide_seen = 0;
-    
+
     input
         .bids(scope)
         .map(move |b| {
@@ -50,18 +50,17 @@ pub fn window_3_faster_rank<S: Scope<Timestamp = usize>>(
                     data.swap(&mut buffer);
                     for record in buffer.iter() {
                         let pane = ((record.1 / window_slide_ns) + 1) * window_slide_ns;  // Pane size equals slide size as window is a multiple of slide
-                        //println!("Inserting record with time {:?} in pane {:?}", record.1, pane);
+                        // println!("Inserting record with time {:?} in pane {:?}", record.1, pane);
                         pane_buckets.rmw(pane, vec![*record]);
                     }
                 });
 
                 notificator.for_each(|cap, _, _| {
                     let mut records = Vec::new();
-                    //lookup all panes in the window
-                    //println!("Received notification for end of window {:?}", &(cap.time()));
+                    // println!("Received notification for end of window {:?}", &(cap.time()));
                     for i in 0..window_slice_count {
                         let pane = cap.time() - window_slide_ns * i;
-                        //println!("Lookup pane {:?}", &pane);
+                        // println!("Lookup pane {:?}", &pane);
                         if let Some(keys) = pane_buckets.get(&pane) {
                             for record in keys.iter() {
                                 records.push(record.0);
@@ -69,14 +68,13 @@ pub fn window_3_faster_rank<S: Scope<Timestamp = usize>>(
                         } else {
                                 println!("Processing pane {} of last window.", cap.time() - window_slide_ns * i);
                         }
-                        // remove the first slide of the fired window
-                        // TODO (john): remove() doesn't actually remove entries from FASTER
+                        // Remove the first slide of the fired window
                         if i == window_slice_count - 1 {
-                            //println!("Removing pane {:?}", pane);
+                            // println!("Removing pane {:?}", pane);
                             let _ = pane_buckets.remove(&pane).expect("Pane to remove must exist");
                         }
                     }
-                    // sort window contents
+                    // Sort window contents
                     records.sort_unstable();
                     let mut rank = 1;
                     let mut count = 0;
@@ -91,7 +89,7 @@ pub fn window_3_faster_rank<S: Scope<Timestamp = usize>>(
                         }
                         count+=1;
                         output.session(&cap).give((*cap.time(), *record, rank));
-                        //println!("*** End of window: {:?}, Auction: {:?}, Rank: {:?}", cap.time(), record, rank);
+                        // println!("*** End of window: {:?}, Auction: {:?}, Rank: {:?}", cap.time(), record, rank);
                     }
                 });
             }

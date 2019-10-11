@@ -53,18 +53,18 @@ pub fn window_2a_rocksdb<S: Scope<Timestamp = usize>>(
                         for win in windows {
                             // Notify at end of this window
                             notificator.notify_at(time.delayed(&(win + window_size)));
-                            //println!("Asking notification for end of window: {:?}", win + window_size);
+                            // println!("Asking notification for end of window: {:?}", win + window_size);
                             window_buckets.rmw(win.to_be(), vec![*record]);
-                            //println!("Appending record with timestamp {} to window with start timestamp {}.", record.1, win);
+                            // println!("Appending record with timestamp {} to window with start timestamp {}.", record.1, win);
                         }
                     }
                 });
 
                 notificator.for_each(|cap, _, _| {
-                    //println!("Firing and cleaning window with start timestamp {}.", cap.time() - window_size);
+                    // println!("Firing and cleaning window with start timestamp {}.", cap.time() - window_size);
                     let start_timestamp = cap.time() - window_size;
                     let records = window_buckets.remove(&start_timestamp.to_be()).expect("Must exist");
-                    //println!("*** Window start: {}, contents {:?}.", cap.time() - window_size, records);
+                    // println!("*** Window start: {}, contents {:?}.", cap.time() - window_size, records);
                     for record in records.iter() {
                         output.session(&cap).give(record.clone());
                     }

@@ -14,7 +14,7 @@ pub fn window_3_faster_count<S: Scope<Timestamp = usize>>(
 ) -> Stream<S, (usize, usize)> {
 
     let mut last_slide_seen = 0;
-    
+
     input
         .bids(scope)
         .map(move |b| {
@@ -50,31 +50,30 @@ pub fn window_3_faster_count<S: Scope<Timestamp = usize>>(
                     data.swap(&mut buffer);
                     for record in buffer.iter() {
                         let pane = ((record.1 / window_slide_ns) + 1) * window_slide_ns;  // Pane size equals slide size as window is a multiple of slide
-                        //println!("Inserting record with time {:?} in pane {:?}", record.1, pane);
+                        // println!("Inserting record with time {:?} in pane {:?}", record.1, pane);
                         pane_buckets.rmw(pane, 1);
                     }
                 });
 
                 notificator.for_each(|cap, _, _| {
-                    //println!("Received notification for end of window {:?}", &(cap.time()));
+                    // println!("Received notification for end of window {:?}", &(cap.time()));
                     let mut count = 0;
                     //lookup all panes in the window
                     for i in 0..window_slice_count {
                         let pane = cap.time() - window_slide_ns * i;
-                        //println!("Lookup pane {:?}", &pane);
+                        // println!("Lookup pane {:?}", &pane);
                         if let Some(record) = pane_buckets.get(&pane) {
                                 count+=*record.as_ref();
                         } else {
                             println!("Processing pane {} of last window.", cap.time() - window_slide_ns * i);
                         }
                         // remove the first slide of the fired window
-                        // TODO (john): remove() doesn't actually remove entries from FASTER
                         if i == window_slice_count - 1 {
-                            //println!("Removing pane {:?}", pane);
+                            // println!("Removing pane {:?}", pane);
                             let _ = pane_buckets.remove(&pane).expect("Pane to remove must exist");
                         }
                     }
-                    //println!("*** End of window: {:?}, Count: {:?}", cap.time(), count);
+                    // println!("*** End of window: {:?}, Count: {:?}", cap.time(), count);
                     output.session(&cap).give((*cap.time(), count));
                 });
             }

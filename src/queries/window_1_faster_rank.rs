@@ -51,16 +51,16 @@ pub fn window_1_faster_rank<S: Scope<Timestamp = usize>>(
                     data.swap(&mut buffer);
                     for record in buffer.iter() {
                         window_contents.insert(record.1, record.0);
-                        //println!("Inserting timestamp in the index: slide: {:?}, timestamp: {:?}", current_slide, record.1);
+                        // println!("Inserting timestamp in the index: slide: {:?}, timestamp: {:?}", current_slide, record.1);
                         slide_index.rmw(current_slide, vec![record.1]);
                     }
                 });
 
                 notificator.for_each(|cap, _, _| {
-                    //println!("End of window: {:?}", cap.time());
+                    // println!("End of window: {:?}", cap.time());
                     let mut records = Vec::new();
                     for i in 0..window_slice_count {
-                        //println!("Lookup slide {:?}", &(cap.time() - window_slide_ns * i));
+                        // println!("Lookup slide {:?}", &(cap.time() - window_slide_ns * i));
                         if let Some(keys) = slide_index.get(&(cap.time() - window_slide_ns * i)) {
                             for timestamp in keys.as_ref() {
                                 let value = window_contents.get(timestamp).expect("Timestamp must exist");
@@ -87,10 +87,9 @@ pub fn window_1_faster_rank<S: Scope<Timestamp = usize>>(
                         }
                         count+=1;
                         output.session(&cap).give((*cap.time(), auction, rank));
-                        //println!("*** End of window: {:?}, Auction: {:?}, Rank: {:?}", cap.time(), auction, rank);
+                        // println!("*** End of window: {:?}, Auction: {:?}, Rank: {:?}", cap.time(), auction, rank);
                     }
-                    // TODO (john): remove() doesn't actually remove entries from FASTER
-                    //println!("Removing slide {:?}", &(cap.time() - (window_slice_count - 1) * window_slide_ns));
+                    // println!("Removing slide {:?}", &(cap.time() - (window_slice_count - 1) * window_slide_ns));
                     if let Some(keys_to_remove) = slide_index.remove(&(cap.time() - (window_slice_count - 1) * window_slide_ns)) {
                         for timestamp in keys_to_remove {
                             let _ = window_contents.remove(&timestamp).expect("Timestamp to remove must exist");

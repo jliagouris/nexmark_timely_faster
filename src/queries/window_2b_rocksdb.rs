@@ -56,7 +56,7 @@ pub fn window_2b_rocksdb<S: Scope<Timestamp = usize>>(
                     if max_window_seen < slide {
                         for window_start in (max_window_seen..slide).step_by(window_slide_ns) {
                             // Merging in RocksDB needs a first 'put' operation to work properly
-                            //println!("First PUT operation for window start: {:?}", window_start);
+                            // println!("First PUT operation for window start: {:?}", window_start);
                             window_buckets.insert(window_start.to_be(), vec![]);  // Initialize window state
                         }
                         max_window_seen = slide;
@@ -66,9 +66,9 @@ pub fn window_2b_rocksdb<S: Scope<Timestamp = usize>>(
                         for win in windows {
                             // Notify at end of this window
                             notificator.notify_at(time.delayed(&(win + window_size)));
-                            //println!("Asking notification for end of window: {:?}", win + window_size);
+                            // println!("Asking notification for end of window: {:?}", win + window_size);
                             window_buckets.rmw(win.to_be(), vec![*record]);
-                            //println!("Appending record with timestamp {} to window with start timestamp {}.", record.1, win);
+                            // println!("Appending record with timestamp {} to window with start timestamp {}.", record.1, win);
                         }
                     }
                 });
@@ -77,7 +77,7 @@ pub fn window_2b_rocksdb<S: Scope<Timestamp = usize>>(
                     // println!("Firing and cleaning window with start timestamp {}.", cap.time() - window_size);
                     let start_timestamp = cap.time() - window_size;
                     let records = window_buckets.remove(&start_timestamp.to_be()).expect("Must exist");
-                    //println!("*** Window start: {}, contents {:?}.", cap.time() - window_size, records);
+                    // println!("*** Window start: {}, contents {:?}.", cap.time() - window_size, records);
                     for record in records.iter() {
                         output.session(&cap).give(record.clone());
                     }

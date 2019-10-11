@@ -50,6 +50,7 @@ pub fn window_1_rocksdb_count<S: Scope<Timestamp = usize>>(
                             // Add window margins so that we can iterate over its contents upon notification
                             // println!("Inserting dummy record:: time: {:?}, value:{:?}", sl - window_slide_ns, 0);
                             window_contents.insert((sl - window_slide_ns).to_be(), 0);  // Start timestamp of window
+                            // TODO (john): Omit adding the end here and change loop condition below
                             // println!("Inserting dummy record:: time: {:?}, value:{:?}", window_end, 0);
                             window_contents.insert(window_end.to_be(), 0);  // End timestamp of window
                         }
@@ -85,16 +86,13 @@ pub fn window_1_rocksdb_count<S: Scope<Timestamp = usize>>(
                                                         std::slice::from_raw_parts(k.as_ptr(), k.len())
                                                     }).expect("Cannot deserialize timestamp");
                             timestamp = usize::from_be(timestamp);
-                            // we don't need to deserialize the values to compute COUNT
-                            /*let auction_id: usize = bincode::deserialize(unsafe {
-                                                        std::slice::from_raw_parts(ser_value.as_ptr(), ser_value.len())
-                                                    }).expect("Cannot deserialize auction id");
-                            println!("Found record:: time: {}, value:{}", timestamp, auction_id);*/
+                            // We don't need to deserialize the values to compute COUNT
+                            // println!("Found record:: time: {}", timestamp);
                             if (timestamp % window_slide_ns) != 0 {  // Omit dummy record
                                 // increase the counter unless this is a dummy record
                                 count+=1;
                             }
-                            if timestamp == *window_end {  // Omit dummy record
+                            if timestamp == *window_end {  // Omit dummy record and exit loop
                                 break;
                             }
                             assert!(timestamp < *window_end);
@@ -104,7 +102,7 @@ pub fn window_1_rocksdb_count<S: Scope<Timestamp = usize>>(
                         }
                     }
                     // Output the COUNT
-                    //println!("*** End of window: {:?}, Count: {:?}", cap.time(), count);
+                    // println!("*** End of window: {:?}, Count: {:?}", cap.time(), count);
                     output.session(&cap).give((*cap.time(), count));
 
                     // Purge state of first slide in window

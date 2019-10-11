@@ -52,21 +52,21 @@ pub fn window_2_faster_rank<S: Scope<Timestamp = usize>>(
                         for win in windows {
                             // Notify at end of this window
                             notificator.notify_at(time.delayed(&(win + window_size)));
-                            //println!("Asking notification for end of window: {:?}", win + window_size);
+                            // println!("Asking notification for end of window: {:?}", win + window_size);
                             window_buckets.rmw(win, vec![*record]);
-                            //println!("Appending record with timestamp {} to window with start timestamp {}.", record.1, win);
+                            // println!("Appending record with timestamp {} to window with start timestamp {}.", record.1, win);
                         }
                     }
                 });
 
                 notificator.for_each(|cap, _, _| {
-                    //println!("Firing and cleaning window with start timestamp {}.", cap.time() - window_size);
+                    // println!("Firing and cleaning window with start timestamp {}.", cap.time() - window_size);
                     let records = window_buckets.remove(&(cap.time() - window_size)).expect("Must exist");
                     let mut auctions = Vec::new();
                     for record in records.iter() {
                         auctions.push(record.0);
                     }
-                    //println!("*** Window start: {}, contents {:?}.", cap.time() - window_size, records);
+                    // println!("*** Window start: {}, contents {:?}.", cap.time() - window_size, records);
                     auctions.sort_unstable();
                     let mut rank = 1;
                     let mut count = 0;
@@ -81,7 +81,7 @@ pub fn window_2_faster_rank<S: Scope<Timestamp = usize>>(
                         }
                         count+=1;
                         output.session(&cap).give((*cap.time(), *auction, rank));
-                        //println!("*** Start of window: {:?}, Auction: {:?}, Rank: {:?}", cap.time(), auction, rank);
+                        // println!("*** Start of window: {:?}, Auction: {:?}, Rank: {:?}", cap.time(), auction, rank);
                     }
                 });
             },

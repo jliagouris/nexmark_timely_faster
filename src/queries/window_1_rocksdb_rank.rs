@@ -50,6 +50,7 @@ pub fn window_1_rocksdb_rank<S: Scope<Timestamp = usize>>(
                             // Add window margins so that we can iterate over its contents upon notification
                             // println!("Inserting dummy record:: time: {:?}, value:{:?}", sl - window_slide_ns, 0);
                             window_contents.insert((sl - window_slide_ns).to_be(), 0);  // Start timestamp of window
+                            // TODO (john): Omit adding the end here and change loop condition below
                             // println!("Inserting dummy record:: time: {:?}, value:{:?}", window_end, 0);
                             window_contents.insert(window_end.to_be(), 0);  // End timestamp of window
                         }

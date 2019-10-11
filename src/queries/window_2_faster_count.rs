@@ -52,17 +52,17 @@ pub fn window_2_faster_count<S: Scope<Timestamp = usize>>(
                         for win in windows {
                             // Notify at end of this window
                             notificator.notify_at(time.delayed(&(win + window_size)));
-                            //println!("Asking notification for end of window: {:?}", win + window_size);
+                            // println!("Asking notification for end of window: {:?}", win + window_size);
                             window_buckets.rmw(win, 1);
-                            //println!("Appending record with timestamp {} to window with start timestamp {}.", record.1, win);
+                            // println!("Appending record with timestamp {} to window with start timestamp {}.", record.1, win);
                         }
                     }
                 });
 
                 notificator.for_each(|cap, _, _| {
-                    //println!("Firing and cleaning window with start timestamp {}.", cap.time() - window_size);
+                    // println!("Firing and cleaning window with start timestamp {}.", cap.time() - window_size);
                     let count = window_buckets.remove(&(cap.time() - window_size)).expect("Must exist");
-                    //println!("*** Window start: {}, count {}.", cap.time() - window_size, count);
+                    // println!("*** Window start: {}, count {}.", cap.time() - window_size, count);
                     output.session(&cap).give((*cap.time(), count));
                 });
             },

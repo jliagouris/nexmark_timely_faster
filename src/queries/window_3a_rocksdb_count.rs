@@ -61,7 +61,7 @@ pub fn window_3a_rocksdb_count<S: Scope<Timestamp = usize>>(
                     data.swap(&mut buffer);
                     for record in buffer.iter() {
                         let pane = ((record.1 / window_slide_ns) + 1) * window_slide_ns;  // Pane size equals slide size as window is a multiple of slide
-                        //println!("Inserting record with time {:?} in pane {:?}", record.1, pane);
+                        // println!("Inserting record with time {:?} in pane {:?}", record.1, pane);
                         pane_buckets.rmw(pane.to_be(), 1 as usize);
                     }
                 });
@@ -96,7 +96,7 @@ pub fn window_3a_rocksdb_count<S: Scope<Timestamp = usize>>(
                     // println!("*** End of window: {:?}, Count: {:?}", cap.time(), count);
                     output.session(&cap).give((*cap.time(), count));
                     // Purge state of first slide/pane in window
-                    //println!("Removing pane with end timestamp time: {}", first_pane_end);
+                    // println!("Removing pane with end timestamp time: {}", first_pane_end);
                     pane_buckets.remove(&first_pane_end.to_be()).expect("Pane to remove must exist");
                 });
             }
