@@ -13,6 +13,7 @@ pub fn window_3a_rocksdb_count<S: Scope<Timestamp = usize>>(
     window_slide_ns: usize,
 ) -> Stream<S, (usize, usize)> {
 
+    let mut last_slide_seen = 0;
     let mut max_window_seen = 0;
 
     input
@@ -33,16 +34,26 @@ pub fn window_3a_rocksdb_count<S: Scope<Timestamp = usize>>(
                 let prefix_key_len: usize = pane_buckets.as_ref().get_key_prefix_length();
                 let mut buffer = Vec::new();
                 input.for_each(|time, data| {
-                    // The end timestamp of the slide/pane the current epoch corresponds to
-                    let slide = ((time.time() / window_slide_ns) + 1) * window_slide_ns;
-                    let window_end = slide + (window_slide_ns * (window_slice_count - 1));
-                    //println!("Asking notification for end of window: {:?}", window_end);
-                    notificator.notify_at(time.delayed(&window_end));
-                    // Add window margins so that iterator is always valid
-                    if max_window_seen <= slide {
-                        let end = slide + window_slide_ns;
+                    // The end timestamp of the slide the current epoch corresponds to
+                    let current_slide = ((time.time() / window_slide_ns) + 1) * window_slide_ns;
+                    // println!("Current slide: {:?}", current_slide);
+                    // Ask notifications for all remaining slides up to the current one
+                    assert!(last_slide_seen <= current_slide);
+                    if last_slide_seen < current_slide {
+                        let start = last_slide_seen + window_slide_ns;
+                        let end = current_slide + window_slide_ns;
+                        for sl in (start..end).step_by(window_slide_ns) {
+                            let window_end = sl + window_slide_ns * (window_slice_count - 1);
+                            // println!("Asking notification for the end of window: {:?}", window_end);
+                            notificator.notify_at(time.delayed(&window_end));
+                        }
+                        last_slide_seen = current_slide;
+                    }
+                    // Add window start so that we can iterate over its contents upon notification
+                    if max_window_seen <= current_slide {
+                        let end = current_slide + window_slide_ns;
                         for window_start in (max_window_seen..end).step_by(window_slide_ns) {
-                            //println!("First PUT operation for window start: {:?}", window_start);
+                            // println!("First PUT operation for window start: {:?}", window_start);
                             pane_buckets.insert(window_start.to_be(), 0 as usize);  // Initialize window state
                         }
                         max_window_seen = end;
