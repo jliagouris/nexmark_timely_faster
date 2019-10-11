@@ -31,15 +31,26 @@ pub fn window_1_faster_count<S: Scope<Timestamp = usize>>(
                 let mut window_contents = state_handle.get_managed_map("window_contents");
                 let mut buffer = Vec::new();
                 input.for_each(|time, data| {
-                    // Notify at the end of this slide
-                    let slide = ((time.time() / window_slide_ns) + 1) * window_slide_ns;
-                    //println!("Asking notification for end of window: {:?}", slide + (window_slide_ns * (window_slice_count - 1)));
-                    notificator.notify_at(time.delayed(&(slide + window_slide_ns * (window_slice_count - 1))));
+                    // The end timestamp of the slide the current epoch corresponds to
+                    let current_slide = ((time.time() / window_slide_ns) + 1) * window_slide_ns;
+                    // println!("Current slide: {:?}", current_slide);
+                    // Ask notifications for all remaining slides up to the current one
+                    if last_slide_seen < current_slide {
+                        if last_slide_seen == 0 {  // Set last_slide_seen for the first time
+                            last_slide_seen = current_slide;
+                        }
+                        let end = current_slide + window_slide_ns;
+                        for sl in (last_slide_seen..end).step_by(window_slide_ns) {
+                            // println!("Asking notification for the end of window: {:?}", sl + window_slide_ns * (window_slice_count - 1));
+                            notificator.notify_at(time.delayed(&(sl + window_slide_ns * (window_slice_count - 1))));
+                        }
+                        last_slide_seen = current_slide;
+                    }
                     data.swap(&mut buffer);
                     for record in buffer.iter() {
                         window_contents.insert(record.1, record.0);
-                        //println!("Inserting timestamp in the index: slide: {:?}, timestamp: {:?}", slide, record.1);
-                        slide_index.rmw(slide, vec![record.1]);
+                        //println!("Inserting timestamp in the index: slide: {:?}, timestamp: {:?}", current_slide, record.1);
+                        slide_index.rmw(current_slide, vec![record.1]);
                     }
                 });
 
