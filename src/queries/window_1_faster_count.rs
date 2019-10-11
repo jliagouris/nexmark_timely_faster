@@ -14,7 +14,7 @@ pub fn window_1_faster_count<S: Scope<Timestamp = usize>>(
 ) -> Stream<S, (usize, usize)> {
 
     let mut last_slide_seen = 0;
-    
+
     input
         .bids(scope)
         .map(move |b| {
@@ -37,13 +37,12 @@ pub fn window_1_faster_count<S: Scope<Timestamp = usize>>(
                     // The end timestamp of the slide the current epoch corresponds to
                     let current_slide = ((time.time() / window_slide_ns) + 1) * window_slide_ns;
                     // println!("Current slide: {:?}", current_slide);
+                    assert!(last_slide_seen <= current_slide);
                     // Ask notifications for all remaining slides up to the current one
                     if last_slide_seen < current_slide {
-                        if last_slide_seen == 0 {  // Set last_slide_seen for the first time
-                            last_slide_seen = current_slide;
-                        }
+                        let start = last_slide_seen + window_slide_ns;
                         let end = current_slide + window_slide_ns;
-                        for sl in (last_slide_seen..end).step_by(window_slide_ns) {
+                        for sl in (start..end).step_by(window_slide_ns) {
                             // println!("Asking notification for the end of window: {:?}", sl + window_slide_ns * (window_slice_count - 1));
                             notificator.notify_at(time.delayed(&(sl + window_slide_ns * (window_slice_count - 1))));
                         }

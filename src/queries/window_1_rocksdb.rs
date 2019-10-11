@@ -15,7 +15,7 @@ pub fn window_1_rocksdb<S: Scope<Timestamp = usize>>(
     window_slide_ns: usize,
 ) -> Stream<S, (usize, usize)> {
     
-    let mut last_slide = std::usize::MAX;
+    let mut last_slide_seen = 0;
 
     input
         .bids(scope)
@@ -36,18 +36,24 @@ pub fn window_1_rocksdb<S: Scope<Timestamp = usize>>(
 
                 input.for_each(|time, data| {
                     // The end timestamp of the slide the current epoch corresponds to
-                    let slide = ((time.time() / window_slide_ns) + 1) * window_slide_ns;
-                    let window_end = slide + window_slide_ns * (window_slice_count - 1);
-                    // println!("Asking notification for the end of window: {:?}", window_end);
-                    notificator.notify_at(time.delayed(&window_end));
-
-                    // Add window margins
-                    if last_slide != slide {
-                        // println!("Inserting dummy record:: time: {:?}, value:{:?}", slide - window_slide_ns, 0);
-                        window_contents.insert((slide - window_slide_ns).to_be(), 0);  // Start timestamp of window
-                        // println!("Inserting dummy record:: time: {:?}, value:{:?}", window_end, 0);
-                        window_contents.insert(window_end.to_be(), 0);  // End timestamp of window
-                        last_slide = slide;
+                    let current_slide = ((time.time() / window_slide_ns) + 1) * window_slide_ns;
+                    // println!("Current slide: {:?}", current_slide);
+                    // Ask notifications for all remaining slides up to the current one
+                    assert!(last_slide_seen <= current_slide);
+                    if last_slide_seen < current_slide {
+                        let start = last_slide_seen + window_slide_ns;
+                        let end = current_slide + window_slide_ns;
+                        for sl in (start..end).step_by(window_slide_ns) {
+                            let window_end = sl + window_slide_ns * (window_slice_count - 1);
+                            // println!("Asking notification for the end of window: {:?}", window_end);
+                            notificator.notify_at(time.delayed(&window_end));
+                            // Add window margins so that we can iterate over its contents upon notification
+                            // println!("Inserting dummy record:: time: {:?}, value:{:?}", sl - window_slide_ns, 0);
+                            window_contents.insert((sl - window_slide_ns).to_be(), 0);  // Start timestamp of window
+                            // println!("Inserting dummy record:: time: {:?}, value:{:?}", window_end, 0);
+                            window_contents.insert(window_end.to_be(), 0);  // End timestamp of window
+                        }
+                        last_slide_seen = current_slide;
                     }
                     // Add window contents
                     data.swap(&mut buffer);
