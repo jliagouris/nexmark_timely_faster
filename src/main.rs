@@ -334,6 +334,20 @@ fn main() {
                     });
                 }
 
+                // 1st window implementation with FASTER and COUNT aggregation using custom slicing
+                if queries.iter().any(|x| *x == "window_1_faster_count_custom_slice") {
+                    worker.dataflow::<_, _, _, FASTERBackend>(|scope, _| {
+                        ::nexmark::queries::window_1_faster_count_custom_slice(
+                            &nexmark_input,
+                            nexmark_timer,
+                            scope,
+                            window_slice_count,
+                            window_slide_ns,
+                        )
+                            .probe_with(&mut probe);
+                    });
+                }
+
                 // 1st window implementation with FASTER and RANK aggregation
                 if queries.iter().any(|x| *x == "window_1_faster_rank") {
                     worker.dataflow::<_, _, _, FASTERBackend>(|scope, _| {

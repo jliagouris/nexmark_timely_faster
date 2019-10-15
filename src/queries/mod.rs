@@ -7,6 +7,7 @@ use crate::event::{Auction, Bid, Person};
 
 mod window_1_faster;
 mod window_1_faster_count;
+mod window_1_faster_count_custom_slice;
 mod window_1_faster_rank;
 mod window_2_faster;
 mod window_1_rocksdb;
@@ -47,6 +48,7 @@ pub use self::window_3b_rocksdb_count::window_3b_rocksdb_count;
 pub use self::window_3b_rocksdb_rank::window_3b_rocksdb_rank;
 pub use self::window_1_faster::window_1_faster;
 pub use self::window_1_faster_count::window_1_faster_count;
+pub use self::window_1_faster_count_custom_slice::window_1_faster_count_custom_slice;
 pub use self::window_1_faster_rank::window_1_faster_rank;
 pub use self::window_2_faster::window_2_faster;
 pub use self::window_2_faster_count::window_2_faster_count;
