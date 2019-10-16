@@ -44,7 +44,7 @@ pub fn window_1_faster_count_custom_slice<S: Scope<Timestamp = usize>>(
                         let start = last_slide_seen + window_slide_ns;
                         let end = current_slide + window_slide_ns;
                         for sl in (start..end).step_by(window_slide_ns) {
-                            println!("Asking notification for the end of window: {:?}", sl + window_slide_ns * (window_slice_count - 1));
+                            //println!("Asking notification for the end of window: {:?}", sl + window_slide_ns * (window_slice_count - 1));
                             notificator.notify_at(time.delayed(&(sl + window_slide_ns * (window_slice_count - 1))));
                         }
                         last_slide_seen = current_slide;
@@ -53,7 +53,7 @@ pub fn window_1_faster_count_custom_slice<S: Scope<Timestamp = usize>>(
                     for record in buffer.iter() {
                         window_contents.insert(record.1, record.0);
                         let record_slice = ((record.1 / 1_000_000_000) + 1) * 1_000_000_000;  // Use slices of 1s each to index state
-                        println!("Inserting timestamp in the index: slide: {:?}, timestamp: {:?}", record_slice, record.1);
+                        //println!("Inserting timestamp in the index: slide: {:?}, timestamp: {:?}", record_slice, record.1);
                         slide_index.rmw(record_slice, vec![record.1]);
                     }
                 });
@@ -63,7 +63,7 @@ pub fn window_1_faster_count_custom_slice<S: Scope<Timestamp = usize>>(
                     let mut count = 0;
                     let limit = window_slice_count * num_slices;
                     for i in 0..limit {
-                        println!("Lookup slice {:?}", &(cap.time() - 1_000_000_000 * i));
+                        //println!("Lookup slice {:?}", &(cap.time() - 1_000_000_000 * i));
                         if let Some(keys) = slide_index.get(&(cap.time() - 1_000_000_000 * i)) {
                             for timestamp in keys.as_ref() {
                                 // println!("Lookup timestamp {:?}", timestamp);
@@ -75,13 +75,13 @@ pub fn window_1_faster_count_custom_slice<S: Scope<Timestamp = usize>>(
                             println!("Processing slide {} of last window.", cap.time() - 1_000_000_000 * i);
                         }
                     }
-                    println!("*** End of window: {:?}, Count: {:?}", cap.time(), count);
+                    //println!("*** End of window: {:?}, Count: {:?}", cap.time(), count);
                     output.session(&cap).give((*cap.time(), count));
                     let slide = cap.time() - (window_slice_count - 1) * window_slide_ns;
-                    println!("Removing slide {:?}", slide);
+                    //println!("Removing slide {:?}", slide);
                     // Remove all slices of the first slide
                     for i in 0..num_slices {
-                        println!("Removing slice {:?}", slide - i * 1_000_000_000);
+                        //println!("Removing slice {:?}", slide - i * 1_000_000_000);
                         if let Some(keys_to_remove) = slide_index.remove(&(slide - i * 1_000_000_000)) {
                             for timestamp in keys_to_remove {
                                 let _ = window_contents.remove(&timestamp).expect("Timestamp to remove must exist");

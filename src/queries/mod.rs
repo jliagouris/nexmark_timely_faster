@@ -3,7 +3,7 @@ use timely::dataflow::operators::capture::event::link::EventLink;
 use timely::dataflow::operators::capture::Replay;
 use timely::dataflow::{Scope, Stream};
 
-use crate::event::{Auction, Bid, Person};
+use crate::event::{Auction, Bid, Date, Person};
 
 mod window_1_faster;
 mod window_1_faster_count;
@@ -30,6 +30,10 @@ mod window_3b_rocksdb_count;
 mod window_3b_rocksdb_rank;
 mod window_3_faster_count;
 mod window_3_faster_rank;
+mod q4_managed;
+mod q4_q6_common_managed;
+mod q5_managed;
+mod q6_managed;
 
 pub use self::window_1_rocksdb::window_1_rocksdb;
 pub use self::window_1_rocksdb_count::window_1_rocksdb_count;
@@ -56,6 +60,10 @@ pub use self::window_2_faster_rank::window_2_faster_rank;
 pub use self::window_3_faster::window_3_faster;
 pub use self::window_3_faster_count::window_3_faster_count;
 pub use self::window_3_faster_rank::window_3_faster_rank;
+pub use self::q4_managed::q4_managed;
+pub use self::q4_q6_common_managed::q4_q6_common_managed;
+pub use self::q5_managed::q5_managed;
+pub use self::q6_managed::q6_managed;
 
 
 pub struct NexmarkInput<'a> {
@@ -92,7 +100,7 @@ pub struct NexmarkTimer {
     pub time_dilation: usize,
 }
 
-/*impl NexmarkTimer {
+impl NexmarkTimer {
     #[inline(always)]
     fn to_nexmark_time(self, x: usize) -> Date {
         debug_assert!(
@@ -108,4 +116,4 @@ pub struct NexmarkTimer {
     fn from_nexmark_time(self, x: Date) -> usize {
         *x / self.time_dilation
     }
-}*/
+}
