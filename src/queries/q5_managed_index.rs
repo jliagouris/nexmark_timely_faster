@@ -70,9 +70,9 @@ pub fn q5_managed_index<S: Scope<Timestamp = usize>>(
                         let composite_key = format!("{:?}_{:?}", a_time, auction);
                         let mut exists = false;
                         {   // Check if composite key exists in the slide
-			    let composite_keys: Option<std::rc::Rc<Vec<String>>> = state_index.get(&a_time);
+                            let composite_keys: Option<std::rc::Rc<Vec<String>>> = state_index.get(&a_time);
                             if composite_keys.is_some() {
-				let composite_keys = composite_keys.unwrap(); 
+                                let composite_keys = composite_keys.unwrap();
                                 exists = composite_keys.iter().any(|k: &String| *k==composite_key);
                             }
                         }
@@ -107,7 +107,7 @@ pub fn q5_managed_index<S: Scope<Timestamp = usize>>(
                         // Gives the accumulation per worker
                         output.session(&cap).give((ac, co));
                     }
-                    // Remove the last first slide of the expired window
+                    // Remove the first slide of the expired window
                     state_index.remove(&slide_to_remove);
                     for key in composite_keys_to_remove.iter() {
                         pre_reduce_state.remove(&key);
