@@ -5,13 +5,13 @@ use crate::queries::{NexmarkInput, NexmarkTimer};
 use timely::dataflow::operators::generic::operator::Operator;
 use timely::dataflow::operators::map::Map;
 
-pub fn window_1_faster_count_custom_slice<S: Scope<Timestamp = usize>>(
+pub fn window_1_faster_rank_custom_slice<S: Scope<Timestamp = usize>>(
     input: &NexmarkInput,
     _nt: NexmarkTimer,
     scope: &mut S,
     window_slice_count: usize,
     window_slide_ns: usize,
-) -> Stream<S, (usize, usize)> {
+) -> Stream<S, (usize, usize, usize)> {
 
     let mut last_slide_seen = 0;
     let num_slices = window_slide_ns / 1_000_000_000;
@@ -60,25 +60,40 @@ pub fn window_1_faster_count_custom_slice<S: Scope<Timestamp = usize>>(
 
                 notificator.for_each(|cap, _, _| {
                     // println!("End of window: {:?}", cap.time());
-                    let mut count = 0;
+                    let mut records = Vec::new();
                     let limit = window_slice_count * num_slices;
                     for i in 0..limit {
                         // println!("Lookup slice {:?}", &(cap.time() - 1_000_000_000 * i));
                         if let Some(keys) = slide_index.get(&(cap.time() - 1_000_000_000 * i)) {
                             for timestamp in keys.as_ref() {
-                                // println!("Lookup timestamp {:?}", timestamp);
-                                let _ = window_contents.get(timestamp).expect("Timestamp must exist");
-                                count += 1;
+                                let value = window_contents.get(timestamp).expect("Timestamp must exist");
+                                records.push(value);
                             }
                         }
                         else {
                             println!("Processing slide {} of last window.", cap.time() - 1_000_000_000 * i);
                         }
                     }
-                    // println!("*** End of window: {:?}, Count: {:?}", cap.time(), count);
-                    output.session(&cap).give((*cap.time(), count));
+                    // sort window contents
+                    records.sort_unstable();
+                    let mut rank = 1;
+                    let mut count = 0;
+                    let mut current_record = *records[0].as_ref();
+                    for record in &records {
+                        // output (timestamp, auctionID, rank)
+                        let auction = *record.as_ref();
+                        if auction != current_record {
+                            // increase rank and update current
+                            rank+=count;
+                            count = 0;
+                            current_record = auction;
+                        }
+                        count+=1;
+                        output.session(&cap).give((*cap.time(), auction, rank));
+                        // println!("*** End of window: {:?}, Auction: {:?}, Rank: {:?}", cap.time(), auction, rank);
+                    }
                     let slide = cap.time() - (window_slice_count - 1) * window_slide_ns;
-                    // println!("Removing slide {:?}", slide);
+                    // println!("Removing slide {:?}", &(cap.time() - (window_slice_count - 1) * window_slide_ns));
                     // Remove all slices of the first slide
                     for i in 0..num_slices {
                         // println!("Removing slice {:?}", slide - i * 1_000_000_000);

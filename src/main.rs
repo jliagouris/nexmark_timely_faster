@@ -113,14 +113,14 @@ fn main() {
         .arg(
             Arg::with_name("window-slice-count")
                 .long("window-slice-count")
-                .takes_value(true)
-                .required(true),
+                .takes_value(true), 
+                //.required(true),
         )
         .arg(
             Arg::with_name("window-slide")
                 .long("window-slide")
-                .takes_value(true)
-                .required(true),
+                .takes_value(true),
+                //.required(true),
         )
         .arg(
             Arg::with_name("queries")
@@ -171,13 +171,13 @@ fn main() {
 
     let window_slice_count: usize = matches
         .value_of("window-slice-count")
-        .expect("window slice count absent")
+        .unwrap_or("0")
         .parse::<usize>()
         .expect("couldn't parse window slice count");
 
     let window_slide_ns: usize = matches
         .value_of("window-slide")
-        .expect("window slide absent")
+        .unwrap_or("0")
         .parse::<usize>()
         .expect("couldn't parse window slide")
         * 1_000_000_000;
@@ -306,8 +306,25 @@ fn main() {
                     },
                 );
 
+                // Q4: Find average selling price per category
+                // Uses FASTER for the common part and an in-memory hash map for the final aggregation
+                if queries.iter().any(|x| *x == "q4_flex") {
+                    worker.dataflow::<_, _, _, FASTERBackend>(|scope, _| {
+                        ::nexmark::queries::q4_q6_common_managed(
+                            &nexmark_input,
+                            nexmark_timer,
+                            scope,
+                        )
+                            .capture_into(nexmark_input.closed_auctions.clone());
+                        ::nexmark::queries::q4(&nexmark_input, nexmark_timer, scope)
+                            .probe_with(&mut probe);
+                    });
+                }
+
                 // 1st window implementation with FASTER
                 if queries.iter().any(|x| *x == "window_1_faster") {
+                    assert!(window_slice_count > 0);
+                    assert!(window_slide_ns > 0);
                     worker.dataflow::<_, _, _, FASTERBackend>(|scope, _| {
                         ::nexmark::queries::window_1_faster(
                             &nexmark_input,
@@ -322,6 +339,8 @@ fn main() {
 
                 // 1st window implementation with FASTER and COUNT aggregation
                 if queries.iter().any(|x| *x == "window_1_faster_count") {
+                    assert!(window_slice_count > 0);
+                    assert!(window_slide_ns > 0);
                     worker.dataflow::<_, _, _, FASTERBackend>(|scope, _| {
                         ::nexmark::queries::window_1_faster_count(
                             &nexmark_input,
@@ -336,6 +355,8 @@ fn main() {
 
                 // 1st window implementation with FASTER and COUNT aggregation using custom slicing
                 if queries.iter().any(|x| *x == "window_1_faster_count_custom_slice") {
+                    assert!(window_slice_count > 0);
+                    assert!(window_slide_ns > 0);
                     worker.dataflow::<_, _, _, FASTERBackend>(|scope, _| {
                         ::nexmark::queries::window_1_faster_count_custom_slice(
                             &nexmark_input,
@@ -350,6 +371,8 @@ fn main() {
 
                 // 1st window implementation with FASTER and RANK aggregation
                 if queries.iter().any(|x| *x == "window_1_faster_rank") {
+                    assert!(window_slice_count > 0);
+                    assert!(window_slide_ns > 0);
                     worker.dataflow::<_, _, _, FASTERBackend>(|scope, _| {
                         ::nexmark::queries::window_1_faster_rank(
                             &nexmark_input,
@@ -362,8 +385,26 @@ fn main() {
                     });
                 }
 
+                // 1st window implementation with FASTER and RANK aggregation using custom slicing
+                if queries.iter().any(|x| *x == "window_1_faster_rank_custom_slice") {
+                    assert!(window_slice_count > 0);
+                    assert!(window_slide_ns > 0);
+                    worker.dataflow::<_, _, _, FASTERBackend>(|scope, _| {
+                        ::nexmark::queries::window_1_faster_rank_custom_slice(
+                            &nexmark_input,
+                            nexmark_timer,
+                            scope,
+                            window_slice_count,
+                            window_slide_ns,
+                        )
+                            .probe_with(&mut probe);
+                    });
+                }
+
                 // 2nd window implementation with FASTER
                 if queries.iter().any(|x| *x == "window_2_faster") {
+                    assert!(window_slice_count > 0);
+                    assert!(window_slide_ns > 0);
                     worker.dataflow::<_, _, _, FASTERBackend>(|scope, _| {
                         ::nexmark::queries::window_2_faster(
                             &nexmark_input,
@@ -378,6 +419,8 @@ fn main() {
 
                 // 2nd window implementation with FASTER and COUNT aggregation
                 if queries.iter().any(|x| *x == "window_2_faster_count") {
+                    assert!(window_slice_count > 0);
+                    assert!(window_slide_ns > 0);
                     worker.dataflow::<_, _, _, FASTERBackend>(|scope, _| {
                         ::nexmark::queries::window_2_faster_count(
                             &nexmark_input,
@@ -392,6 +435,8 @@ fn main() {
 
                 // 2nd window implementation with FASTER and RANK aggregation
                 if queries.iter().any(|x| *x == "window_2_faster_rank") {
+                    assert!(window_slice_count > 0);
+                    assert!(window_slide_ns > 0);
                     worker.dataflow::<_, _, _, FASTERBackend>(|scope, _| {
                         ::nexmark::queries::window_2_faster_rank(
                             &nexmark_input,
@@ -406,6 +451,8 @@ fn main() {
 
                 // 3rd window implementation with FASTER
                 if queries.iter().any(|x| *x == "window_3_faster") {
+                    assert!(window_slice_count > 0);
+                    assert!(window_slide_ns > 0);
                     worker.dataflow::<_, _, _, FASTERBackend>(|scope, _| {
                         ::nexmark::queries::window_3_faster(
                             &nexmark_input,
@@ -420,6 +467,8 @@ fn main() {
 
                 // 3rd window implementation with FASTER and COUNT aggregation
                 if queries.iter().any(|x| *x == "window_3_faster_count") {
+                    assert!(window_slice_count > 0);
+                    assert!(window_slide_ns > 0);
                     worker.dataflow::<_, _, _, FASTERBackend>(|scope, _| {
                         ::nexmark::queries::window_3_faster_count(
                             &nexmark_input,
@@ -434,6 +483,8 @@ fn main() {
 
                 // 3rd window implementation with FASTER and RANK aggregation
                 if queries.iter().any(|x| *x == "window_3_faster_rank") {
+                    assert!(window_slice_count > 0);
+                    assert!(window_slide_ns > 0);
                     worker.dataflow::<_, _, _, FASTERBackend>(|scope, _| {
                         ::nexmark::queries::window_3_faster_rank(
                             &nexmark_input,
@@ -448,6 +499,8 @@ fn main() {
 
                 // 1st window implementation with RocksDB
                 if queries.iter().any(|x| *x == "window_1_rocksdb") {
+                    assert!(window_slice_count > 0);
+                    assert!(window_slide_ns > 0);
                     worker.dataflow::<_, _, _, RocksDBBackend>(|scope, _| {
                         ::nexmark::queries::window_1_rocksdb(
                             &nexmark_input,
@@ -462,6 +515,8 @@ fn main() {
 
                 // 1st window implementation with RocksDB and COUNT aggregation
                 if queries.iter().any(|x| *x == "window_1_rocksdb_count") {
+                    assert!(window_slice_count > 0);
+                    assert!(window_slide_ns > 0);
                     worker.dataflow::<_, _, _, RocksDBBackend>(|scope, _| {
                         ::nexmark::queries::window_1_rocksdb_count(
                             &nexmark_input,
@@ -476,6 +531,8 @@ fn main() {
 
                 // 1st window implementation with RocksDB and RANK aggregation
                 if queries.iter().any(|x| *x == "window_1_rocksdb_rank") {
+                    assert!(window_slice_count > 0);
+                    assert!(window_slide_ns > 0);
                     worker.dataflow::<_, _, _, RocksDBBackend>(|scope, _| {
                         ::nexmark::queries::window_1_rocksdb_rank(
                             &nexmark_input,
@@ -490,6 +547,8 @@ fn main() {
 
                 // 2nd window implementation with RocksDB using put + get
                 if queries.iter().any(|x| *x == "window_2a_rocksdb") {
+                    assert!(window_slice_count > 0);
+                    assert!(window_slide_ns > 0);
                     worker.dataflow::<_, _, _, RocksDBBackend>(|scope, _| {
                         ::nexmark::queries::window_2a_rocksdb(  // Same implementation with FASTER
                             &nexmark_input,
@@ -504,6 +563,8 @@ fn main() {
 
                 // 2nd window implementation with RocksDB using put + get and COUNT
                 if queries.iter().any(|x| *x == "window_2a_rocksdb_count") {
+                    assert!(window_slice_count > 0);
+                    assert!(window_slide_ns > 0);
                     worker.dataflow::<_, _, _, RocksDBBackend>(|scope, _| {
                         ::nexmark::queries::window_2a_rocksdb_count(
                             &nexmark_input,
@@ -518,6 +579,8 @@ fn main() {
 
                 // 2nd window implementation with RocksDB using put + get and RANK
                 if queries.iter().any(|x| *x == "window_2a_rocksdb_rank") {
+                    assert!(window_slice_count > 0);
+                    assert!(window_slide_ns > 0);
                     worker.dataflow::<_, _, _, RocksDBBackend>(|scope, _| {
                         ::nexmark::queries::window_2a_rocksdb_rank(
                             &nexmark_input,
@@ -532,6 +595,8 @@ fn main() {
 
                 // 2nd window implementation with RocksDB using merge
                 if queries.iter().any(|x| *x == "window_2b_rocksdb") {
+                    assert!(window_slice_count > 0);
+                    assert!(window_slide_ns > 0);
                     worker.dataflow::<_, _, _, RocksDBMergeBackend>(|scope, _| {
                         ::nexmark::queries::window_2b_rocksdb(
                             &nexmark_input,
@@ -546,6 +611,8 @@ fn main() {
 
                 // 2nd window implementation with RocksDB using merge and COUNT
                 if queries.iter().any(|x| *x == "window_2b_rocksdb_count") {
+                    assert!(window_slice_count > 0);
+                    assert!(window_slide_ns > 0);
                     worker.dataflow::<_, _, _, RocksDBMergeBackend2>(|scope, _| {
                         ::nexmark::queries::window_2b_rocksdb_count(
                             &nexmark_input,
@@ -560,6 +627,8 @@ fn main() {
 
                 // 2nd window implementation with RocksDB using merge and RANK
                 if queries.iter().any(|x| *x == "window_2b_rocksdb_rank") {
+                    assert!(window_slice_count > 0);
+                    assert!(window_slide_ns > 0);
                     worker.dataflow::<_, _, _, RocksDBMergeBackend>(|scope, _| {
                         ::nexmark::queries::window_2b_rocksdb_rank(
                             &nexmark_input,
@@ -574,6 +643,8 @@ fn main() {
 
                 // 3rd window implementation with RocksDB using put + get
                 if queries.iter().any(|x| *x == "window_3a_rocksdb") {
+                    assert!(window_slice_count > 0);
+                    assert!(window_slide_ns > 0);
                     worker.dataflow::<_, _, _, RocksDBBackend>(|scope, _| {
                         ::nexmark::queries::window_3a_rocksdb(
                             &nexmark_input,
@@ -588,6 +659,8 @@ fn main() {
 
                 // 3rd window implementation with RocksDB using put + get and COUNT
                 if queries.iter().any(|x| *x == "window_3a_rocksdb_count") {
+                    assert!(window_slice_count > 0);
+                    assert!(window_slide_ns > 0);
                     worker.dataflow::<_, _, _, RocksDBBackend>(|scope, _| {
                         ::nexmark::queries::window_3a_rocksdb_count(
                             &nexmark_input,
@@ -602,6 +675,8 @@ fn main() {
 
                 // 3rd window implementation with RocksDB using put + get and COUNT
                 if queries.iter().any(|x| *x == "window_3a_rocksdb_rank") {
+                    assert!(window_slice_count > 0);
+                    assert!(window_slide_ns > 0);
                     worker.dataflow::<_, _, _, RocksDBBackend>(|scope, _| {
                         ::nexmark::queries::window_3a_rocksdb_rank(
                             &nexmark_input,
@@ -616,6 +691,8 @@ fn main() {
 
                 // 3rd window implementation with RocksDB using merge
                 if queries.iter().any(|x| *x == "window_3b_rocksdb") {
+                    assert!(window_slice_count > 0);
+                    assert!(window_slide_ns > 0);
                     worker.dataflow::<_, _, _, RocksDBMergeBackend>(|scope, _| {
                         ::nexmark::queries::window_3b_rocksdb(
                             &nexmark_input,
@@ -630,6 +707,8 @@ fn main() {
 
                 // 3rd window implementation with RocksDB using merge and COUNT
                 if queries.iter().any(|x| *x == "window_3b_rocksdb_count") {
+                    assert!(window_slice_count > 0);
+                    assert!(window_slide_ns > 0);
                     worker.dataflow::<_, _, _, RocksDBMergeBackend2>(|scope, _| {
                         ::nexmark::queries::window_3b_rocksdb_count(
                             &nexmark_input,
@@ -644,6 +723,8 @@ fn main() {
 
                 // 3rd window implementation with RocksDB using merge and COUNT
                 if queries.iter().any(|x| *x == "window_3b_rocksdb_rank") {
+                    assert!(window_slice_count > 0);
+                    assert!(window_slide_ns > 0);
                     worker.dataflow::<_, _, _, RocksDBMergeBackend>(|scope, _| {
                         ::nexmark::queries::window_3b_rocksdb_rank(
                             &nexmark_input,
