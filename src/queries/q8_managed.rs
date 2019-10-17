@@ -65,14 +65,14 @@ pub fn q8_managed<S: Scope<Timestamp = usize>>(
 
                 //notificator.for_each(|cap, _, _| {
                 let mut auctions_vec = auctions_state.take().unwrap_or(Vec::new());
-		let mut caps_to_remove = Vec::new(); 
+        		let mut caps_to_remove = Vec::new();
                 for (capability_time, auctions) in auctions_vec.iter_mut() {
                     // If seller's record corresponds to a closed epoch
                     if *capability_time <= complete {
-			if *capability_time < complete {
-				caps_to_remove.push(*capability_time);
-			}
-			// println!("Capability: {}",*capability_time);
+                        if *capability_time < complete {
+                            caps_to_remove.push(*capability_time);
+                        }
+                        // println!("Capability: {}",*capability_time);
                         let cap = capabilities.get_mut(capability_time).expect("Capability must exist.");
                         let mut session = output.session(&cap);
                         for &(person, time) in auctions.iter() {
@@ -93,9 +93,9 @@ pub fn q8_managed<S: Scope<Timestamp = usize>>(
                         }
                     }
                 }
-		for cap in caps_to_remove.drain(..) {
-			capabilities.remove(&cap).expect("Cap to remove must exist");
-		}
+        		for cap in caps_to_remove.drain(..) {
+        			capabilities.remove(&cap).expect("Cap to remove must exist");
+        		}
                 auctions_vec.retain(|&(_, ref list)| !list.is_empty());
                 auctions_state.set(auctions_vec);
                 //});
