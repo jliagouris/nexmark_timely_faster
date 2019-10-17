@@ -7,6 +7,8 @@ use faster_rs::FasterRmw;
 use timely::dataflow::operators::generic::operator::Operator;
 use timely::dataflow::operators::map::Map;
 
+use std::str::FromStr;
+
 #[derive(Deserialize, Serialize)]
 struct Counts(HashMap<usize, usize>);
 
@@ -65,10 +67,10 @@ pub fn q5_managed_index<S: Scope<Timestamp = usize>>(
                             notificator.notify_at(time.delayed(&w_end));
                         }
                         // Add composite key to the index first
-                        let mut composite_keys = state_index.remove(a_time).unwrap_or(Vec::new());
+                        let mut composite_keys = state_index.remove(&a_time).unwrap_or(Vec::new());
                         let composite_key = format!("{:?}_{:?}", a_time, auction);
-                        composite_keys.push(composite_key);
-                        let count = pre_reduce_state.remove(composite_key).unwrap_or(0);
+                        composite_keys.push(composite_key.clone());
+                        let mut count = pre_reduce_state.remove(&composite_key).unwrap_or(0);
                         count += 1;
                         // Index auction counts by composite key 'slide_auction'
                         pre_reduce_state.insert(composite_key, count);
@@ -79,15 +81,15 @@ pub fn q5_managed_index<S: Scope<Timestamp = usize>>(
                     // Received notification for the end of window
                     let mut counts = HashMap::new();
                     let slide_to_remove = cap.time() - (window_slice_count - 1) * window_slide_ns;
-                    let composite_keys_to_remove = state_index.get(slide_to_remove);
+                    let composite_keys_to_remove = state_index.get(&slide_to_remove).expect("Slide must exist");
                     for i in 0..window_slice_count {
-                        let composite_keys = state_index.get(cap.time() - i * window_slide_ns).expect("Slide must exist");
-                        for composite_key in composite_keys {
+                        let composite_keys = state_index.get(&(cap.time() - i * window_slide_ns)).expect("Slide must exist");
+                        for composite_key in composite_keys.iter() {
                             // Look up state
                             let count = pre_reduce_state.get(&composite_key).expect("Composite key must exist");
-                            let auction_id = usize::from_str(composite_key[composite_key.index("_")+1..]);
-                            let c = counts.entry(auction_id).unwrap_or(0);
-                            *c += count;
+                            let auction_id = usize::from_str(&composite_key[composite_key.find("_").expect("Cannot split composite key")+1..]).expect("Cannot parse auction id");
+                            let c = counts.entry(auction_id).or_insert(0);
+                            *c += *count;
                         }
                     }
                     if let Some((co, ac)) = counts.iter().map(|(&a, &c)| (c, a)).max() {
@@ -96,7 +98,7 @@ pub fn q5_managed_index<S: Scope<Timestamp = usize>>(
                     }
                     // Remove the last first slide of the expired window
                     state_index.remove(&slide_to_remove);
-                    for key in composite_keys_to_remove.drain(..) {
+                    for key in composite_keys_to_remove.iter() {
                         pre_reduce_state.remove(&key);
                     }
                 });
