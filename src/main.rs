@@ -357,6 +357,35 @@ fn main() {
                     });
                 }
 
+                // Q8. Monitor new users. FASTER.
+                if queries.iter().any(|x| *x == "q8_faster") {
+                    worker.dataflow::<_, _, _, FASTERBackend>(|scope, _| {
+                        let window_size_ns = 12 * 60 * 60 * 1_000_000_000;
+                        ::nexmark::queries::q8_managed(
+                            &nexmark_input,
+                            nexmark_timer,
+                            scope,
+                            window_size_ns,
+                        )
+                        .probe_with(&mut probe);
+                    });
+                }
+
+                // Q8. Monitor new users. RocksDB.
+                if queries.iter().any(|x| *x == "q8_rocksdb") {
+                    worker.dataflow::<_, _, _, RocksDBBackend>(|scope, _| {
+                        let window_size_ns = 12 * 60 * 60 * 1_000_000_000;
+                        //let window_size_ns = 4 * 1_000_000_000;
+                        ::nexmark::queries::q8_managed(
+                            &nexmark_input,
+                            nexmark_timer,
+                            scope,
+                            window_size_ns,
+                        )
+                            .probe_with(&mut probe);
+                    });
+                }
+
                 // 1st window implementation with FASTER
                 if queries.iter().any(|x| *x == "window_1_faster") {
                     assert!(window_slice_count > 0);

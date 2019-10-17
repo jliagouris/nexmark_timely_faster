@@ -106,7 +106,7 @@ pub fn q5_managed<S: Scope<Timestamp = usize>>(
                 let mut all_reduce_state = state_handle.get_managed_map("state");
                 let mut buffer = Vec::new();
                 input.for_each(|time, data| {
-                    // Ask notification at the end of the window output and clean up state
+                    // Ask notification at the end of the window to produce output and clean up state
                     notificator.notify_at(time.delayed(&(time.time())));
                     data.swap(&mut buffer);
                     for &(auction_id, count) in buffer.iter() {

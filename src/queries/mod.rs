@@ -35,10 +35,12 @@ mod window_3_faster_rank;
 mod q4;
 mod q4_q6_common_managed;
 mod q5_managed;
+mod q8_managed;
 
 pub use self::q4::q4;
 pub use self::q4_q6_common_managed::q4_q6_common_managed;
 pub use self::q5_managed::q5_managed;
+pub use self::q8_managed::q8_managed;
 
 pub use self::window_1_rocksdb::window_1_rocksdb;
 pub use self::window_1_rocksdb_count::window_1_rocksdb_count;
