@@ -69,6 +69,22 @@ pub use self::window_3_faster::window_3_faster;
 pub use self::window_3_faster_count::window_3_faster_count;
 pub use self::window_3_faster_rank::window_3_faster_rank;
 
+use faster_rs::FasterKv;
+
+#[inline(always)]
+fn maybe_refresh_faster(faster: &FasterKv, monotonic_serial_number: &mut u64) {
+    if *monotonic_serial_number % (1 << 4) == 0 {
+        faster.refresh();
+        if *monotonic_serial_number % (1 << 10) == 0 {
+            faster.complete_pending(true);
+        }
+    }
+    if *monotonic_serial_number % (1 << 20) == 0 {
+        println!("Size: {}", faster.size());
+    }
+    *monotonic_serial_number += 1;
+}
+
 
 pub struct NexmarkInput<'a> {
     pub bids: &'a Rc<EventLink<usize, Bid>>,

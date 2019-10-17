@@ -15,6 +15,10 @@ pub fn q8_managed<S: Scope<Timestamp = usize>>(
 
     let people = input.people(scope).map(|p| (p.id, p.date_time));
 
+    // Used for producing output
+    let mut capabilities: HashMap<usize, Capability<usize>> = HashMap::new();
+    let mut last_cap_seen = 0;
+
     people.binary_frontier(
         &auctions,
         Exchange::new(|p: &(usize, _)| p.0 as u64),
@@ -24,13 +28,9 @@ pub fn q8_managed<S: Scope<Timestamp = usize>>(
             let mut new_people = state_handle.get_managed_map("new_people");
             let mut auctions_state = state_handle.get_managed_value("auctions");
 
-            // Used for produce output
-            let mut capabilities: HashMap<usize, Capability<usize>> = HashMap::new();
-
             move |input1, input2, output| {
                 // Notice new people.
                 input1.for_each(|_time, data| {
-                    //notificator.notify_at(time.delayed(time.time()));
                     for (person, p_time) in data.iter().cloned() {
                         new_people.insert(person, p_time);
                     }
@@ -39,7 +39,9 @@ pub fn q8_managed<S: Scope<Timestamp = usize>>(
                 // Notice new auctions.
                 input2.for_each(|time, data| {
                     let ts = *time.time();
-                    capabilities.insert(ts, time.retain());
+                    if !capabilities.contains_key(&ts) {
+                        capabilities.insert(ts, time.retain());
+                    }
                     let mut data_vec = vec![];
                     data.swap(&mut data_vec);
                     let mut stored_auctions = auctions_state.take().unwrap_or(Vec::new());
@@ -66,28 +68,37 @@ pub fn q8_managed<S: Scope<Timestamp = usize>>(
 
                 //notificator.for_each(|cap, _, _| {
                 let mut auctions_vec = auctions_state.take().unwrap_or(Vec::new());
+
                 for (capability_time, auctions) in auctions_vec.iter_mut() {
                     // If seller's record corresponds to a closed epoch
                     if *capability_time <= complete {
-                        if let Some(mut cap) = capabilities.remove(capability_time) {
-                            let mut session = output.session(&cap);
-                            for &(person, time) in auctions.iter() {
-                                // If person's record corresponds to a closed epoch
-                                if time < nt.to_nexmark_time(complete) {
-                                    if let Some(p_time) = new_people.get(&person) {
-                                        // Do the join within the last 12 hours
-                                        if *time < **p_time + window_size_ns { 
-                                            // seller's time - person's time is within the 12 hours range
-                                            session.give(person);
-                                        }
+                        let cap = capabilities.get_mut(capability_time).expect("Capability must exist.");
+                        let mut session = output.session(&cap);
+                        for &(person, time) in auctions.iter() {
+                            // If person's record corresponds to a closed epoch
+                            if time < nt.to_nexmark_time(complete) {
+                                if let Some(p_time) = new_people.get(&person) {
+                                    // Do the join within the last 12 hours
+                                    if *time < **p_time + window_size_ns { 
+                                        // seller's time - person's time is within the 12 hours range
+                                        session.give(person);
                                     }
                                 }
-                            } 
-                            auctions.retain(|&(_, time)| time >= nt.to_nexmark_time(complete));
-                            if let Some(minimum) = auctions.iter().map(|x| x.1).min() {
-                                cap.downgrade(&nt.from_nexmark_time(minimum));
                             }
+                        } 
+                        if last_cap_seen == 0 {
+                            last_cap_seen = *capability_time;
                         }
+                        // Drop capabilities
+                        if last_cap_seen < *capability_time {
+                            let _ = capabilities.remove(capability_time).expect("Capability must exist.");
+                            last_cap_seen = *capability_time;
+                        }
+                        auctions.retain(|&(_, time)| time >= nt.to_nexmark_time(complete));
+                        if let Some(minimum) = auctions.iter().map(|x| x.1).min() {
+                            cap.downgrade(&nt.from_nexmark_time(minimum));
+                        }
+                        
                     }
                 }
                 auctions_vec.retain(|&(_, ref list)| !list.is_empty());

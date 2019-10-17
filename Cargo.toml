@@ -21,5 +21,6 @@ metrics-runtime = "*"
 serde = "*"
 serde_derive = "*"
 serde_json = "*"
+tempfile = "*"
 streaming-harness = { version = "^0.1", features = ["hdrhist-support"] }
 timely = { git = "https://github.com/jliagouris/timely-dataflow.git", branch = "state_crate" }
