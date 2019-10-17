@@ -66,10 +66,15 @@ pub fn q5_managed_index<S: Scope<Timestamp = usize>>(
                             let w_end = a_time + (window_slice_count - 1) * window_slide_ns;
                             notificator.notify_at(time.delayed(&w_end));
                         }
-                        // Add composite key to the index first
-                        let mut composite_keys = state_index.remove(&a_time).unwrap_or(Vec::new());
+                        // Get composite keys for the slide
+                        let mut composite_keys = state_index.get(&a_time).unwrap_or(Vec::new());
                         let composite_key = format!("{:?}_{:?}", a_time, auction);
-                        composite_keys.push(composite_key.clone());
+                        // Add composite key only if it does not exist
+                        if !composite_keys.iter().any(|k| k==composite_key) {
+                            let mut composite_keys = state_index.remove(&a_time).unwrap_or(Vec::new());
+                            composite_keys.push(composite_key.clone());
+                            state_index.insert(a_time, composite_keys)
+                        }
                         let mut count = pre_reduce_state.remove(&composite_key).unwrap_or(0);
                         count += 1;
                         // Index auction counts by composite key 'slide_auction'
