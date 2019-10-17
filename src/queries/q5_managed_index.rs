@@ -67,10 +67,14 @@ pub fn q5_managed_index<S: Scope<Timestamp = usize>>(
                             notificator.notify_at(time.delayed(&w_end));
                         }
                         // Get composite keys for the slide
-                        let mut composite_keys = state_index.get(&a_time).unwrap_or(Vec::new());
                         let composite_key = format!("{:?}_{:?}", a_time, auction);
-                        // Add composite key only if it does not exist
-                        if !composite_keys.iter().any(|k| k==composite_key) {
+                        let mut exists = false;
+                        {   // Check if composite key exists in the slide
+                            if let Some(composite_keys) = state_index.get(&a_time) {
+                                exists = composite_keys.iter().any(|k| k==composite_key);
+                            }
+                        }
+                        if !exists {  // Insert new composite key
                             let mut composite_keys = state_index.remove(&a_time).unwrap_or(Vec::new());
                             composite_keys.push(composite_key.clone());
                             state_index.insert(a_time, composite_keys)
