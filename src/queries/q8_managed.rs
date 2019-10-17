@@ -39,9 +39,7 @@ pub fn q8_managed<S: Scope<Timestamp = usize>>(
                 // Notice new auctions.
                 input2.for_each(|time, data| {
                     let ts = *time.time();
-                    if !capabilities.contains_key(&ts) {
-                        capabilities.insert(ts, time.retain());
-                    }
+                    let _ = capabilities.entry(ts).or_insert_with(|| time.retain());
                     let mut data_vec = vec![];
                     data.swap(&mut data_vec);
                     let mut stored_auctions = auctions_state.take().unwrap_or(Vec::new());
@@ -79,13 +77,13 @@ pub fn q8_managed<S: Scope<Timestamp = usize>>(
                             if time < nt.to_nexmark_time(complete) {
                                 if let Some(p_time) = new_people.get(&person) {
                                     // Do the join within the last 12 hours
-                                    if *time < **p_time + window_size_ns { 
+                                    if *time < **p_time + window_size_ns {
                                         // seller's time - person's time is within the 12 hours range
                                         session.give(person);
                                     }
                                 }
                             }
-                        } 
+                        }
                         if last_cap_seen == 0 {
                             last_cap_seen = *capability_time;
                         }
@@ -98,7 +96,7 @@ pub fn q8_managed<S: Scope<Timestamp = usize>>(
                         if let Some(minimum) = auctions.iter().map(|x| x.1).min() {
                             cap.downgrade(&nt.from_nexmark_time(minimum));
                         }
-                        
+
                     }
                 }
                 auctions_vec.retain(|&(_, ref list)| !list.is_empty());
