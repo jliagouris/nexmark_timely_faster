@@ -321,6 +321,42 @@ fn main() {
                     });
                 }
 
+                // Q5. Hot Items. FASTER.
+                if queries.iter().any(|x| *x == "q5_faster") {
+                    // 60s windows, ticking in 1s intervals
+                    // NEXMark default is 60 minutes, ticking in one minute intervals
+                    let w_slice_count = 60;
+                    let w_slide_ns = 1_000_000_000;
+                    worker.dataflow::<_, _, _, FASTERBackend>(|scope, _| {
+                        ::nexmark::queries::q5_managed(
+                            &nexmark_input,
+                            nexmark_timer,
+                            scope,
+                            w_slice_count,
+                            w_slide_ns,
+                        )
+                        .probe_with(&mut probe);
+                    });
+                }
+
+                // Q5. Hot Items. RocksDB.
+                if queries.iter().any(|x| *x == "q5_rocksdb") {
+                    // 60s windows, ticking in 1s intervals
+                    // NEXMark default is 60 minutes, ticking in one minute intervals
+                    let w_slice_count = 60;
+                    let w_slide_ns = 1_000_000_000;
+                    worker.dataflow::<_, _, _, RocksDBBackend>(|scope, _| {
+                        ::nexmark::queries::q5_managed(
+                            &nexmark_input,
+                            nexmark_timer,
+                            scope,
+                            w_slice_count,
+                            w_slide_ns,
+                        )
+                            .probe_with(&mut probe);
+                    });
+                }
+
                 // 1st window implementation with FASTER
                 if queries.iter().any(|x| *x == "window_1_faster") {
                     assert!(window_slice_count > 0);
