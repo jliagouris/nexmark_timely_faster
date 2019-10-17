@@ -17,7 +17,6 @@ pub fn q8_managed<S: Scope<Timestamp = usize>>(
 
     // Used for producing output
     let mut capabilities: HashMap<usize, Capability<usize>> = HashMap::new();
-    let mut last_cap_seen = 0;
 
     people.binary_frontier(
         &auctions,
@@ -66,10 +65,14 @@ pub fn q8_managed<S: Scope<Timestamp = usize>>(
 
                 //notificator.for_each(|cap, _, _| {
                 let mut auctions_vec = auctions_state.take().unwrap_or(Vec::new());
-
+		let mut caps_to_remove = Vec::new(); 
                 for (capability_time, auctions) in auctions_vec.iter_mut() {
                     // If seller's record corresponds to a closed epoch
                     if *capability_time <= complete {
+			if *capability_time < complete {
+				caps_to_remove.push(*capability_time);
+			}
+			// println!("Capability: {}",*capability_time);
                         let cap = capabilities.get_mut(capability_time).expect("Capability must exist.");
                         let mut session = output.session(&cap);
                         for &(person, time) in auctions.iter() {
@@ -84,21 +87,15 @@ pub fn q8_managed<S: Scope<Timestamp = usize>>(
                                 }
                             }
                         }
-                        if last_cap_seen == 0 {
-                            last_cap_seen = *capability_time;
-                        }
-                        // Drop capabilities
-                        if last_cap_seen < *capability_time {
-                            let _ = capabilities.remove(capability_time).expect("Capability must exist.");
-                            last_cap_seen = *capability_time;
-                        }
                         auctions.retain(|&(_, time)| time >= nt.to_nexmark_time(complete));
                         if let Some(minimum) = auctions.iter().map(|x| x.1).min() {
                             cap.downgrade(&nt.from_nexmark_time(minimum));
                         }
-
                     }
                 }
+		for cap in caps_to_remove.drain(..) {
+			capabilities.remove(&cap).expect("Cap to remove must exist");
+		}
                 auctions_vec.retain(|&(_, ref list)| !list.is_empty());
                 auctions_state.set(auctions_vec);
                 //});
