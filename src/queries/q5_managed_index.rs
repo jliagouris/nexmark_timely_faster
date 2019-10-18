@@ -91,6 +91,7 @@ pub fn q5_managed_index<S: Scope<Timestamp = usize>>(
                 });
 
                 notificator.for_each(|cap, _, _| {
+                    // TODO (john): Use Prefix scan for RocksDB
                     // println!("Received notification for the end of window {}", cap.time());
                     let mut counts = HashMap::new();
                     for i in 0..window_slice_count {
