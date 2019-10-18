@@ -1,16 +1,16 @@
 use std::collections::HashMap;
 use timely::dataflow::channels::pact::Exchange;
 use timely::dataflow::{Scope, Stream};
-use timely::state::Rmw;
 
 use crate::queries::{NexmarkInput, NexmarkTimer};
+use faster_rs::FasterRmw;
 use timely::dataflow::operators::generic::operator::Operator;
 use timely::dataflow::operators::map::Map;
 
 #[derive(Deserialize, Serialize)]
 struct Counts(HashMap<usize, usize>);
 
-impl Rmw for Counts {
+impl FasterRmw for Counts {
     fn rmw(&self, _modification: Self) -> Self {
         panic!("RMW on Counts not allowed!");
     }
@@ -19,7 +19,7 @@ impl Rmw for Counts {
 #[derive(Deserialize, Serialize)]
 struct AuctionBids((usize, usize));
 
-impl Rmw for AuctionBids {
+impl FasterRmw for AuctionBids {
     fn rmw(&self, _modification: Self) -> Self {
         panic!("RMW on AuctionBids not allowed!");
     }
@@ -37,6 +37,7 @@ pub fn q5_managed<S: Scope<Timestamp = usize>>(
         .map(move |b| {
             (
                 b.auction,
+                // The end timestamp of the slide the current event corresponds to
                 ((*b.date_time / window_slide_ns) + 1) * window_slide_ns,
             )
         })
@@ -49,27 +50,35 @@ pub fn q5_managed<S: Scope<Timestamp = usize>>(
                 let mut pre_reduce_state = state_handle.get_managed_map("state");
                 let mut buffer = Vec::new();
                 input.for_each(|time, data| {
-                    // Notify at end of this epoch
-                    notificator.notify_at(
-                        time.delayed(&(((time.time() / window_slide_ns) + 1) * window_slide_ns)),
-                    );
+                    // Notify at end timestamp of the slide the current epoch corresponds to
+                    let current_slide = ((time.time() / window_slide_ns) + 1) * window_slide_ns;
+                    let window_end = current_slide + (window_slice_count - 1) * window_slide_ns;
+                    // Ask notification for the end of the window
+                    notificator.notify_at(time.delayed(&window_end));
                     // Notify when data exits window
-                    notificator.notify_at(time.delayed(
-                        &(((time.time() / window_slide_ns) + 1 + window_slice_count)
-                            * window_slide_ns),
-                    ));
+                    //notificator.notify_at(time.delayed(
+                    //    &(((time.time() / window_slide_ns) + 1 + window_slice_count)
+                    //        * window_slide_ns),
+                    //));
                     data.swap(&mut buffer);
                     for &(auction, a_time) in buffer.iter() {
+                        if a_time != current_slide {
+                            // Ask notification for the end of the latest window the record corresponds to
+                            let w_end = a_time + (window_slice_count - 1) * window_slide_ns;
+                            notificator.notify_at(time.delayed(&w_end));
+                        }
                         let mut counts: Counts = pre_reduce_state
                             .remove(&a_time)
                             .unwrap_or(Counts(HashMap::new()));
                         let count = counts.0.entry(auction).or_insert(0);
                         *count += 1;
+                        // Index auction counts by the end timestamp of the slide they correspond to
                         pre_reduce_state.insert(a_time, counts);
                     }
                 });
 
                 notificator.for_each(|cap, _, _| {
+                    // Received notification for the end of window
                     let mut counts = HashMap::new();
                     for i in 0..window_slice_count {
                         if let Some(slide_counts) =
@@ -80,14 +89,11 @@ pub fn q5_managed<S: Scope<Timestamp = usize>>(
                             }
                         }
                     }
-                    let mut counts_vec: Vec<_> = counts.iter().collect();
-                    counts_vec.sort_by(|a, b| b.1.cmp(a.1));
-                    if counts_vec.len() > 0 {
+                    if let Some((co, ac)) = counts.iter().map(|(&a, &c)| (c, a)).max() {
                         // Gives the accumulation per worker
-                        output
-                            .session(&cap)
-                            .give((*counts_vec[0].0, *counts_vec[0].1));
+                        output.session(&cap).give((ac, co));
                     }
+                    // Remove the last first slide of the expired window
                     pre_reduce_state.remove(&(cap.time() - window_slice_count * window_slide_ns));
                 });
             },
@@ -100,6 +106,7 @@ pub fn q5_managed<S: Scope<Timestamp = usize>>(
                 let mut all_reduce_state = state_handle.get_managed_map("state");
                 let mut buffer = Vec::new();
                 input.for_each(|time, data| {
+                    // Ask notification at the end of the window to produce output and clean up state
                     notificator.notify_at(time.delayed(&(time.time())));
                     data.swap(&mut buffer);
                     for &(auction_id, count) in buffer.iter() {
