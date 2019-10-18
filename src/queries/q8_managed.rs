@@ -68,10 +68,8 @@ pub fn q8_managed<S: Scope<Timestamp = usize>>(
         		let mut caps_to_remove = Vec::new();
                 for (capability_time, auctions) in auctions_vec.iter_mut() {
                     // If seller's record corresponds to a closed epoch
-                    if *capability_time <= complete {
-                        if *capability_time < complete {
-                            caps_to_remove.push(*capability_time);
-                        }
+                    if *capability_time < complete {
+                        caps_to_remove.push(*capability_time);
                         // println!("Capability: {}",*capability_time);
                         let cap = capabilities.get_mut(capability_time).expect("Capability must exist.");
                         let mut session = output.session(&cap);
