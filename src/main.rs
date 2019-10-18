@@ -131,7 +131,7 @@ fn main() {
         .collect();
 
     // Read and report RSS
-    let statm_reporter_running = nexmark::tools::statm_reporter();
+    //let statm_reporter_running = nexmark::tools::statm_reporter();
 
     // define a new computational scope, in which to run NEXMark queries
     let timelines: Vec<_> = timely::execute_from_args(timely_args.into_iter(), move |worker| {
@@ -268,7 +268,7 @@ fn main() {
             }
 
             // Q4: Find average selling price per category. Native.
-            if queries.iter().any(|x| *x == "q4_flex") {
+            /*if queries.iter().any(|x| *x == "q4_flex") {
                 worker.dataflow(|scope| {
                     ::nexmark::queries::q4_q6_common(&nexmark_input, nexmark_timer, scope)
                         .capture_into(nexmark_input.closed_auctions.clone());
@@ -276,7 +276,7 @@ fn main() {
                         //.inspect_batch(|t, xs| println!("@ {}: {:?}", t, xs))
                         .probe_with(&mut probe);
                 });
-            }
+            }*/
 
             // Q5. Hot Items. Native.
             if queries.iter().any(|x| *x == "q5") {
@@ -426,7 +426,7 @@ fn main() {
     .map(|x| x.unwrap())
     .collect();
 
-    statm_reporter_running.store(false, ::std::sync::atomic::Ordering::SeqCst);
+    //statm_reporter_running.store(false, ::std::sync::atomic::Ordering::SeqCst);
 
     let ::streaming_harness::timeline::Timeline {
         timeline,
