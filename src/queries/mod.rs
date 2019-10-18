@@ -10,6 +10,7 @@ mod q2;
 mod q3;
 mod q4;
 mod q4_memory;
+mod q4_flex;
 mod q4_q6_common;
 mod q5;
 mod q6;
@@ -21,6 +22,7 @@ pub use self::q2::q2;
 pub use self::q3::q3;
 pub use self::q4::q4;
 pub use self::q4_memory::q4_memory;
+pub use self::q4_flex::q4_flex;
 pub use self::q4_q6_common::q4_q6_common;
 pub use self::q5::q5;
 pub use self::q6::q6;
@@ -35,9 +37,6 @@ fn maybe_refresh_faster(faster: &FasterKv, monotonic_serial_number: &mut u64) {
         if *monotonic_serial_number % (1 << 10) == 0 {
             faster.complete_pending(true);
         }
-    }
-    if *monotonic_serial_number % (1 << 20) == 0 {
-        println!("Size: {}", faster.size());
     }
     *monotonic_serial_number += 1;
 }
