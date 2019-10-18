@@ -258,6 +258,17 @@ fn main() {
                 });
             }
 
+            // Q4: Find average selling price per category. Native.
+            if queries.iter().any(|x| *x == "q4_flex") {
+                worker.dataflow(|scope| {
+                    ::nexmark::queries::q4_q6_common(&nexmark_input, nexmark_timer, scope)
+                        .capture_into(nexmark_input.closed_auctions.clone());
+                    ::nexmark::queries::q4_memory(&nexmark_input, nexmark_timer, scope)
+                        //.inspect_batch(|t, xs| println!("@ {}: {:?}", t, xs))
+                        .probe_with(&mut probe);
+                });
+            }
+
             // Q5. Hot Items. Native.
             if queries.iter().any(|x| *x == "q5") {
                 // 60s windows, ticking in 1s intervals
