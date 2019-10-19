@@ -91,9 +91,9 @@ pub fn q8_managed<S: Scope<Timestamp = usize>>(
                         }
                     }
                 }
-                for cap in caps_to_remove.drain(..) {
-                    capabilities.remove(&cap).expect("Cap to remove must exist");
-                }
+        		for cap in caps_to_remove.drain(..) {
+        			capabilities.remove(&cap).expect("Cap to remove must exist");
+        		}
                 auctions_vec.retain(|&(_, ref list)| !list.is_empty());
                 auctions_state.set(auctions_vec);
                 //});

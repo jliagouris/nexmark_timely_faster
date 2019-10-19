@@ -1,6 +1,16 @@
-# NEXMark benchmark for Timely with FASTER
+# Window evaluation techniques with alternative state backends
 
-A lot of this implementation is derived from the implementation in [Megaphone](https://github.com/strymon-system/megaphone), mostly written by Moritz Hoffman and Frank McSherry.
+1. Record buffer
+2. Window buckets
+3. Panes
+
+## Install dependencies for faster-rs (ubuntu)
+
+```
+$ add-apt-repository -y ppa:ubuntu-toolchain-r/test
+$ apt update
+$ apt install -y g++-7 libaio-dev uuid-dev libtbb-dev
+```
 
 ## Running a Query
 Each query can be run for a specified duration (in seconds) and with a given event generation rate
@@ -9,6 +19,10 @@ Queries have three varieties. To run using "vanilla" Timely simply supply the qu
 ```bash
 $ cargo run --release -- --duration 1000 --rate 1000000 --queries q3_faster
 ```
+
+### Window parameters
+- `window-slide`: the size of the window slide in s
+- `window-slice-count`: the number of slides in a window, i.e. the window size in s is `window-slide*window-slice-count`
 
 ## Running on multiple workers/processes
 Timely Dataflow accepts configuration via arguments supplied at runtime. These can be passed by adding an extra `--` between the line above and Timely's arguments.
