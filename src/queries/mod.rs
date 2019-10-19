@@ -9,6 +9,7 @@ mod window_1_faster;
 mod window_1_faster_count;
 mod window_1_faster_count_custom_slice;
 mod window_1_faster_rank;
+mod window_1_faster_rank_custom_slice;
 mod window_2_faster;
 mod window_1_rocksdb;
 mod window_1_rocksdb_count;
@@ -35,6 +36,20 @@ mod q4_q6_common_managed;
 mod q5_managed;
 mod q6_managed;
 
+mod q4;
+mod q4_q6_common_managed;
+mod q5_managed;
+mod q5_managed_index;
+mod q8_managed;
+mod q8_managed_map;
+
+pub use self::q4::q4;
+pub use self::q4_q6_common_managed::q4_q6_common_managed;
+pub use self::q5_managed::q5_managed;
+pub use self::q5_managed_index::q5_managed_index;
+pub use self::q8_managed::q8_managed;
+pub use self::q8_managed_map::q8_managed_map;
+
 pub use self::window_1_rocksdb::window_1_rocksdb;
 pub use self::window_1_rocksdb_count::window_1_rocksdb_count;
 pub use self::window_1_rocksdb_rank::window_1_rocksdb_rank;
@@ -54,6 +69,7 @@ pub use self::window_1_faster::window_1_faster;
 pub use self::window_1_faster_count::window_1_faster_count;
 pub use self::window_1_faster_count_custom_slice::window_1_faster_count_custom_slice;
 pub use self::window_1_faster_rank::window_1_faster_rank;
+pub use self::window_1_faster_rank_custom_slice::window_1_faster_rank_custom_slice;
 pub use self::window_2_faster::window_2_faster;
 pub use self::window_2_faster_count::window_2_faster_count;
 pub use self::window_2_faster_rank::window_2_faster_rank;
@@ -64,6 +80,22 @@ pub use self::q4_managed::q4_managed;
 pub use self::q4_q6_common_managed::q4_q6_common_managed;
 pub use self::q5_managed::q5_managed;
 pub use self::q6_managed::q6_managed;
+
+use faster_rs::FasterKv;
+
+#[inline(always)]
+fn maybe_refresh_faster(faster: &FasterKv, monotonic_serial_number: &mut u64) {
+    if *monotonic_serial_number % (1 << 4) == 0 {
+        faster.refresh();
+        if *monotonic_serial_number % (1 << 10) == 0 {
+            faster.complete_pending(true);
+        }
+    }
+    if *monotonic_serial_number % (1 << 20) == 0 {
+        println!("Size: {}", faster.size());
+    }
+    *monotonic_serial_number += 1;
+}
 
 
 pub struct NexmarkInput<'a> {

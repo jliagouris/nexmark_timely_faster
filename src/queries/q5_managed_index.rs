@@ -7,6 +7,8 @@ use faster_rs::FasterRmw;
 use timely::dataflow::operators::generic::operator::Operator;
 use timely::dataflow::operators::map::Map;
 
+use std::str::FromStr;
+
 #[derive(Deserialize, Serialize)]
 struct Counts(HashMap<usize, usize>);
 
@@ -25,7 +27,7 @@ impl FasterRmw for AuctionBids {
     }
 }
 
-pub fn q5_managed<S: Scope<Timestamp = usize>>(
+pub fn q5_managed_index<S: Scope<Timestamp = usize>>(
     input: &NexmarkInput,
     _nt: NexmarkTimer,
     scope: &mut S,
@@ -47,6 +49,7 @@ pub fn q5_managed<S: Scope<Timestamp = usize>>(
             "Q5 Accumulate Per Worker",
             None,
             move |input, output, notificator, state_handle| {
+                let mut state_index = state_handle.get_managed_map("index");
                 let mut pre_reduce_state = state_handle.get_managed_map("state");
                 let mut buffer = Vec::new();
                 input.for_each(|time, data| {
@@ -55,46 +58,76 @@ pub fn q5_managed<S: Scope<Timestamp = usize>>(
                     let window_end = current_slide + (window_slice_count - 1) * window_slide_ns;
                     // Ask notification for the end of the window
                     notificator.notify_at(time.delayed(&window_end));
-                    // Notify when data exits window
-                    //notificator.notify_at(time.delayed(
-                    //    &(((time.time() / window_slide_ns) + 1 + window_slice_count)
-                    //        * window_slide_ns),
-                    //));
                     data.swap(&mut buffer);
                     for &(auction, a_time) in buffer.iter() {
                         if a_time != current_slide {
+                            // a_time < current_slide
                             // Ask notification for the end of the latest window the record corresponds to
                             let w_end = a_time + (window_slice_count - 1) * window_slide_ns;
                             notificator.notify_at(time.delayed(&w_end));
                         }
-                        let mut counts: Counts = pre_reduce_state
-                            .remove(&a_time)
-                            .unwrap_or(Counts(HashMap::new()));
-                        let count = counts.0.entry(auction).or_insert(0);
-                        *count += 1;
-                        // Index auction counts by the end timestamp of the slide they correspond to
-                        pre_reduce_state.insert(a_time, counts);
+                        let mut exists = false;
+                        {   // Check if composite key exists in the slide
+                            // println!("Composite Key: {:?}",(a_time,auction));
+                            let keys: Option<std::rc::Rc<Vec<usize>>> = state_index.get(&a_time);
+                            if keys.is_some() {
+                                // println!("Composite keys: {:?}",keys);
+                                let keys = keys.unwrap();
+                                exists = keys.iter().any(|k: &usize| *k==auction);
+                            }
+                        }
+                        if !exists {  // Insert new composite key
+                            let mut keys = state_index.remove(&a_time).unwrap_or(Vec::new());
+                            keys.push(auction);
+                            state_index.insert(a_time, keys)
+                        }
+                        let composite_key = (a_time, auction);
+                        let mut count = pre_reduce_state.remove(&composite_key).unwrap_or(0);
+                        // println!("Composite key {:?} with count {}", composite_key, count);
+                        count += 1;
+                        // Index auction counts by composite key 'slide_auction'
+                        pre_reduce_state.insert(composite_key, count);
                     }
                 });
 
                 notificator.for_each(|cap, _, _| {
-                    // Received notification for the end of window
+                    // TODO (john): Use Prefix scan for RocksDB
+                    // println!("Received notification for the end of window {}", cap.time());
                     let mut counts = HashMap::new();
                     for i in 0..window_slice_count {
-                        if let Some(slide_counts) =
-                        pre_reduce_state.get(&(cap.time() - i * window_slide_ns))
-                            {
-                                for (auction, count) in slide_counts.0.iter() {
-                                    *counts.entry(*auction).or_insert(0) += *count;
-                                }
+                        let slide = cap.time() - i * window_slide_ns;
+                        // println!("Slide: {}",slide);
+                        if let Some(auction_ids) = state_index.get(&slide) {
+                            for auction_id in auction_ids.iter() {
+                                let composite_key = (slide, *auction_id);
+                                // Look up state
+                                let count = pre_reduce_state.get(&composite_key).expect("Composite key must exist");
+                                // println!("Found auction id {} in composite key {:?}",auction_id,composite_key);
+                                let c = counts.entry(auction_id.clone()).or_insert(0);
+                                *c += *count;
                             }
+                        }
+                        else {
+                            println!("Could not find index entry for window {}",cap.time());
+                        }
                     }
                     if let Some((co, ac)) = counts.iter().map(|(&a, &c)| (c, a)).max() {
                         // Gives the accumulation per worker
                         output.session(&cap).give((ac, co));
                     }
-                    // Remove the last first slide of the expired window
-                    pre_reduce_state.remove(&(cap.time() - window_slice_count * window_slide_ns));
+                    // Remove the first slide of the expired window
+                    let slide_to_remove = cap.time() - (window_slice_count - 1) * window_slide_ns;
+                    // println!("Slide to remove: {}",slide_to_remove);
+                    if let Some(auctions_in_slide) = state_index.get(&slide_to_remove) {
+                        // println!("Auctions to remove: {:?}",auctions_in_slide);
+                        state_index.remove(&slide_to_remove);
+                        for auction in auctions_in_slide.iter() {
+                            pre_reduce_state.remove(&(slide_to_remove,*auction));
+                        }
+                    }
+                    else {
+                        println!("End of window {}. Could not find slide {}",cap.time(),slide_to_remove);
+                    }
                 });
             },
         )
