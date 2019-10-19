@@ -249,6 +249,7 @@ fn main() {
 
             // Q4: Find average selling price per category. Native.
             if queries.iter().any(|x| *x == "q4") {
+                println!("Running query 4...");
                 worker.dataflow(|scope| {
                     ::nexmark::queries::q4_q6_common(&nexmark_input, nexmark_timer, scope)
                         .capture_into(nexmark_input.closed_auctions.clone());
@@ -308,6 +309,7 @@ fn main() {
 
             // Q7. Highest Bid. Native.
             if queries.iter().any(|x| *x == "q7") {
+                println!("Test!!!");
                 worker.dataflow(|scope| {
                     // Window ticks every 10 seconds.
                     // NEXMark default is different: ticks every 60s

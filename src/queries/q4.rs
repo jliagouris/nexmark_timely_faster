@@ -12,14 +12,17 @@ pub fn q4<S: Scope<Timestamp = usize>>(
     _nt: NexmarkTimer,
     scope: &mut S,
 ) -> Stream<S, (usize, usize)> {
-    let aggs_directory = TempDir::new_in(".").unwrap().into_path();
+    let aggs_directory = TempDir::new_in(".").expect("Unable to create FASTER directory");
+    //let aggs_directory = TempDir::new_in(".").unwrap().into_path();
     // Stores category -> (total, count)
     let aggs = FasterKv::new_u64_pair_store(
-        67108864,
-        8589934592,
-        aggs_directory.to_str().unwrap().to_string(),
+        1 << 24,
+        512 * 1024 * 1024,
+        aggs_directory.into_path().to_str().unwrap().to_string(),
     )
-    .unwrap();
+    .expect("Couldn't initialize FASTER");
+    aggs.start_session();
+   // unwrap();
     let mut aggs_store_serial = 0;
     input
         .closed_auctions(scope)
