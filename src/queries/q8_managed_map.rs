@@ -12,7 +12,7 @@ pub fn q8_managed_map<S: Scope<Timestamp = usize>>(
 ) -> Stream<S, usize> {
     let auctions = input.auctions(scope).map(|a| (a.seller, a.date_time));
 
-    let people = input.auctions(scope).map(|p| (p.id, p.date_time));
+    let people = input.people(scope).map(|p| (p.id, p.date_time));
 
     people.binary_notify(
         &auctions,
