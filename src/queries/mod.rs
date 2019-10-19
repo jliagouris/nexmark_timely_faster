@@ -32,9 +32,8 @@ mod window_3b_rocksdb_rank;
 mod window_3_faster_count;
 mod window_3_faster_rank;
 mod q4_managed;
-mod q4_q6_common_managed;
-mod q5_managed;
 mod q6_managed;
+mod q7_managed;
 
 mod q4;
 mod q4_q6_common_managed;
@@ -49,6 +48,7 @@ pub use self::q5_managed::q5_managed;
 pub use self::q5_managed_index::q5_managed_index;
 pub use self::q8_managed::q8_managed;
 pub use self::q8_managed_map::q8_managed_map;
+pub use self::q7_managed::q7_managed;
 
 pub use self::window_1_rocksdb::window_1_rocksdb;
 pub use self::window_1_rocksdb_count::window_1_rocksdb_count;
@@ -77,8 +77,6 @@ pub use self::window_3_faster::window_3_faster;
 pub use self::window_3_faster_count::window_3_faster_count;
 pub use self::window_3_faster_rank::window_3_faster_rank;
 pub use self::q4_managed::q4_managed;
-pub use self::q4_q6_common_managed::q4_q6_common_managed;
-pub use self::q5_managed::q5_managed;
 pub use self::q6_managed::q6_managed;
 
 use faster_rs::FasterKv;

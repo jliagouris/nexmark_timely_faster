@@ -959,6 +959,38 @@ fn main() {
                     });
                 }
 
+                // Q7. Highest Bid. FASTER.
+                if queries.iter().any(|x| *x == "q7_faster") {
+                    worker.dataflow::<_, _, _, FASTERBackend>(|scope, _| {
+                        // Window ticks every 10 seconds.
+                        // NEXMark default is different: ticks every 60s
+                        let window_size_ns = 10_000_000_000;
+                        ::nexmark::queries::q7_managed(
+                            &nexmark_input,
+                            nexmark_timer,
+                            scope,
+                            window_size_ns,
+                        )
+                            .probe_with(&mut probe);
+                    });
+                }
+
+                // Q7. Highest Bid. RocksDB.
+                if queries.iter().any(|x| *x == "q7_rocksdb") {
+                    worker.dataflow::<_, _, _, RocksDBBackend>(|scope, _| {
+                        // Window ticks every 10 seconds.
+                        // NEXMark default is different: ticks every 60s
+                        let window_size_ns = 10_000_000_000;
+                        ::nexmark::queries::q7_managed(
+                            &nexmark_input,
+                            nexmark_timer,
+                            scope,
+                            window_size_ns,
+                        )
+                            .probe_with(&mut probe);
+                    });
+                }
+
             }
 
             let mut config1 = nexmark::config::Config::new();
