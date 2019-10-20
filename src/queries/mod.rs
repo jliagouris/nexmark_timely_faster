@@ -21,6 +21,7 @@ mod window_2b_rocksdb;
 mod window_2b_rocksdb_count;
 mod window_2b_rocksdb_rank;
 mod window_2_faster_count;
+mod keyed_window_3_faster_count;
 mod window_2_faster_rank;
 mod window_3_faster;
 mod window_3a_rocksdb;
@@ -81,6 +82,7 @@ pub use self::window_2_faster_count::window_2_faster_count;
 pub use self::window_2_faster_rank::window_2_faster_rank;
 pub use self::window_3_faster::window_3_faster;
 pub use self::window_3_faster_count::window_3_faster_count;
+pub use self::keyed_window_3_faster_count::keyed_window_3_faster_count;
 pub use self::window_3_faster_rank::window_3_faster_rank;
 
 use faster_rs::FasterKv;

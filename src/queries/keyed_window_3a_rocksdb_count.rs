@@ -1,7 +1,7 @@
 use timely::dataflow::channels::pact::Exchange;
 use timely::dataflow::{Scope, Stream};
 
-use std::collections::HashSet;
+use std::collections::HashMap;
 
 use crate::queries::{NexmarkInput, NexmarkTimer};
 use timely::dataflow::operators::generic::operator::Operator;
@@ -82,13 +82,13 @@ pub fn keyed_window_3a_rocksdb_count<S: Scope<Timestamp = usize>>(
                 notificator.for_each(|cap, _, _| {
                     let window_end = cap.time();
                     let window_start = window_end - (window_slide_ns * window_slice_count);
-                    let first_pane_end = window_start + window_slide_ns; // To know which records to delete
+                    let first_pane = window_start + window_slide_ns; // To know which records to delete
                     // println!("Start of window: {}", window_start);
                     // println!("End of window: {}", *window_end);
                     // println!("End of first slide: {}", first_pane_end);
 
                     // Step 1: Get all distinct keys in all slices of the expired window
-                    let mut all_keys = HashSet::new();
+                    let mut all_keys = HashMap::new();  // key -> min slice the key appears in
                     let slice_start = window_start + 1_000_000_000;
                     // println!("Slice start: {:?}", slice_start);
                     let index_iter = state_index.iter(slice_start.to_be());
@@ -113,73 +113,71 @@ pub fn keyed_window_3a_rocksdb_count<S: Scope<Timestamp = usize>>(
                             break;
                         }
                         for key in keys {
-                            all_keys.insert(key);
+                            let e = all_keys.entry(key).or_insert(timestamp);
+                            if *e > timestamp {
+                                *e = timestamp;
+                            } 
                         }
                     }
 
                     // Step 2: Output result for each keyed window
-                    let first_pane = window_start + window_slide_ns;
                     let last_pane = window_end + window_slide_ns;
-                    let mut all_keys: Vec<usize> = all_keys.into_iter().collect();
-                    all_keys.sort();
+                    let mut all_keys: Vec<(usize, usize)> = all_keys.into_iter().collect();
+                    all_keys.sort_by(|a,b| a.0.cmp(&b.0));
                     {
-                        for key in all_keys.iter() {
-                            // println!("Key {}", key);
+                        for (key, min_slice) in all_keys.iter() {
+                            // println!("Key {} Min slice {}", key, min_slice);
                             let mut count = 0;
-                            let mut found_start = false;
-                            let mut pane = window_start;
-                            // TODO (john): Do a prefix scan here
-                            while !found_start {
-                                pane += window_slide_ns;
-                                if pane == last_pane {
-                                    panic!("This should not happen!");
+                            let mut pane = (min_slice / window_slide_ns) * window_slide_ns;
+                            if pane == 0 {
+                                pane = first_pane;
+                            }
+                            // TODO (john): Do a prefix scan within the key
+                            assert!((pane >= first_pane) && (pane < last_pane));
+                            let composite_key = (key.to_be(), pane.to_be());
+                            // println!("Composite Key {:?}", (key, pane));
+                            let mut auction_id = 0;
+                            let mut last_auction_id_seen = 0;
+                            // Iterate over the panes belonging to the current window
+                            let window_iter = pane_buckets.iter(composite_key);
+                            for (ser_key, ser_value) in window_iter {
+                                let pref = &ser_key[..prefix_key_len_2];
+                                let p: &str =  bincode::deserialize(unsafe {
+                                                        std::slice::from_raw_parts(pref.as_ptr(), pref.len())
+                                                  }).expect("Cannot deserialize prefix");
+                                if p.find("buckets").is_none() {
+                                    break;
                                 }
-                                let composite_key = (key.to_be(), pane.to_be());
-                                // println!("Composite Key {:?}", (key, pane));
-                                let mut auction_id = 0;
-                                let mut last_auction_id_seen = 0;
-                                // Iterate over the panes belonging to the current window
-                                let window_iter = pane_buckets.iter(composite_key);
-                                for (ser_key, ser_value) in window_iter {
-                                    found_start = true;
-                                    let pref = &ser_key[..prefix_key_len_2];
-                                    let p: &str =  bincode::deserialize(unsafe {
-                                                            std::slice::from_raw_parts(pref.as_ptr(), pref.len())
-                                                      }).expect("Cannot deserialize prefix");
-                                    if p.find("buckets").is_none() {
-                                        break;
-                                    }
-                                    let k = &ser_key[prefix_key_len_2..];  // Ignore prefix
-                                    let (auction, mut timestamp): (usize, usize) = bincode::deserialize(unsafe {
-                                                                        std::slice::from_raw_parts(k.as_ptr(), k.len())
-                                                                  }).expect("Cannot deserialize (key, timestamp)");
-                                    timestamp = usize::from_be(timestamp);  // The end timestamp of the pane
-                                    auction_id = usize::from_be(auction);
-                                    let record_count: usize = bincode::deserialize(unsafe {
-                                                                        std::slice::from_raw_parts(ser_value.as_ptr(), ser_value.len())
-                                                                    }).expect("Cannot deserialize count");
-                                    // println!("Found keyed pane:: auction {} time: {} count:{}", auction_id, timestamp, record_count);
-                                    if timestamp > last_pane || (auction_id != last_auction_id_seen && last_auction_id_seen != 0){  // Outside keyed window
-                                        auction_id = last_auction_id_seen;
-                                        break;
-                                    }
-                                    last_auction_id_seen = auction_id;
-                                    count += record_count;
+                                let k = &ser_key[prefix_key_len_2..];  // Ignore prefix
+                                let (auction, mut timestamp): (usize, usize) = bincode::deserialize(unsafe {
+                                                                    std::slice::from_raw_parts(k.as_ptr(), k.len())
+                                                              }).expect("Cannot deserialize (key, timestamp)");
+                                timestamp = usize::from_be(timestamp);  // The end timestamp of the pane
+                                auction_id = usize::from_be(auction);
+                                let record_count: usize = bincode::deserialize(unsafe {
+                                                                    std::slice::from_raw_parts(ser_value.as_ptr(), ser_value.len())
+                                                                }).expect("Cannot deserialize count");
+                                // println!("Found keyed pane:: auction {} time: {} count:{}", auction_id, timestamp, record_count);
+                                if timestamp > last_pane || (auction_id != last_auction_id_seen && last_auction_id_seen != 0){  // Outside keyed window
+                                    auction_id = last_auction_id_seen;
+                                    break;
                                 }
-                                if auction_id != 0 {
-                                    // println!("*** End of window: {:?}, Auction: {} Count: {:?}", cap.time(), auction_id, count);
-                                    output.session(&cap).give((auction_id, count));
-                                }
+                                last_auction_id_seen = auction_id;
+                                count += record_count;
+                            }
+                            if auction_id != 0 {
+                                // println!("*** End of window: {:?}, Auction: {} Count: {:?}", cap.time(), auction_id, count);
+                                output.session(&cap).give((auction_id, count));
                             }
                         }
                     }
                     
                     // Step 3: Purge state of first slide/pane in window
-                    for slice in (slice_start..first_pane_end).step_by(1_000_000_000) {
+                    for slice in (slice_start..first_pane+1).step_by(1_000_000_000) {
                         // println!("Slice to remove from index: {}", slice);
                         state_index.remove(&slice.to_be()).expect("Slice must exist in index");
                     }
-                    for key in all_keys {
+                    for (key, _) in all_keys {
                         for pane in (first_pane..first_pane+1).step_by(window_slide_ns) {
                             // println!("Keyed pane to remove: {:?}", (key, pane));
                             let composite_key = (key.to_be(), pane.to_be());

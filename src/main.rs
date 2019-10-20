@@ -716,6 +716,22 @@ fn main() {
                     });
                 }
 
+                // 3rd window implementation with FASTER and COUNT aggregation
+                if queries.iter().any(|x| *x == "keyed_window_3_faster_count") {
+                    assert!(window_slice_count > 0);
+                    assert!(window_slide_ns > 0);
+                    worker.dataflow::<_, _, _, FASTERBackend>(|scope, _| {
+                        ::nexmark::queries::keyed_window_3_faster_count(
+                            &nexmark_input,
+                            nexmark_timer,
+                            scope,
+                            window_slice_count,
+                            window_slide_ns,
+                        )
+                            .probe_with(&mut probe);
+                    });
+                }
+
                 // 3rd window implementation with FASTER and RANK aggregation
                 if queries.iter().any(|x| *x == "window_3_faster_rank") {
                     assert!(window_slice_count > 0);
