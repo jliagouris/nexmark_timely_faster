@@ -306,6 +306,22 @@ fn main() {
                     },
                 );
 
+                // Q3: Join some auctions. FASTER.
+                if queries.iter().any(|x| *x == "q3_faster") {
+                    worker.dataflow::<_, _, _, FASTERBackend>(|scope, _| {
+                        ::nexmark::queries::q3_managed(&nexmark_input, nexmark_timer, scope)
+                            .probe_with(&mut probe);
+                    });
+                }
+
+                // Q3: Join some auctions. RocksDB.
+                if queries.iter().any(|x| *x == "q3_rocksdb") {
+                    worker.dataflow::<_, _, _, RocksDBBackend>(|scope, _| {
+                        ::nexmark::queries::q3_managed(&nexmark_input, nexmark_timer, scope)
+                            .probe_with(&mut probe);
+                    });
+                }
+
                 // Q4: Find average selling price per category
                 // Uses FASTER for the common part and an in-memory hash map for the final aggregation
                 if queries.iter().any(|x| *x == "q4_flex") {
@@ -317,6 +333,35 @@ fn main() {
                         )
                             .capture_into(nexmark_input.closed_auctions.clone());
                         ::nexmark::queries::q4(&nexmark_input, nexmark_timer, scope)
+                            .probe_with(&mut probe);
+                    });
+                }
+
+                // Q4: Find average selling price per category. FASTER.
+                if queries.iter().any(|x| *x == "q4_faster") {
+                    worker.dataflow::<_, _, _, FASTERBackend>(|scope, _| {
+                        ::nexmark::queries::q4_q6_common_managed(
+                            &nexmark_input,
+                            nexmark_timer,
+                            scope,
+                        )
+                            .capture_into(nexmark_input.closed_auctions.clone());
+                        ::nexmark::queries::q4_managed(&nexmark_input, nexmark_timer, scope)
+                            .probe_with(&mut probe);
+                    });
+                }
+
+                // Q4: Find average selling price per category. RocksDB.
+                if queries.iter().any(|x| *x == "q4_rocksdb") {
+                    worker.dataflow::<_, _, _, RocksDBBackend>(|scope, _| {
+                        ::nexmark::queries::q4_q6_common_managed(
+                            &nexmark_input,
+                            nexmark_timer,
+                            scope,
+                        )
+                            .capture_into(nexmark_input.closed_auctions.clone());
+                        ::nexmark::queries::q4_managed(&nexmark_input, nexmark_timer, scope)
+                            //.inspect_batch(|t,xs| println!("@{}: {:?}", t, xs))
                             .probe_with(&mut probe);
                     });
                 }
@@ -388,6 +433,66 @@ fn main() {
                             scope,
                             w_slice_count,
                             w_slide_ns,
+                        )
+                            .probe_with(&mut probe);
+                    });
+                }
+
+                // Q6. Avg selling price per seller. FASTER.
+                if queries.iter().any(|x| *x == "q6_faster") {
+                    worker.dataflow::<_, _, _, FASTERBackend>(|scope, _| {
+                        ::nexmark::queries::q4_q6_common_managed(
+                            &nexmark_input,
+                            nexmark_timer,
+                            scope,
+                        )
+                            .capture_into(nexmark_input.closed_auctions.clone());
+                        ::nexmark::queries::q6_managed(&nexmark_input, nexmark_timer, scope)
+                            .probe_with(&mut probe);
+                    });
+                }
+
+                // Q6. Avg selling price per seller. RocksDB.
+                if queries.iter().any(|x| *x == "q6_rocksdb") {
+                    worker.dataflow::<_, _, _, RocksDBBackend>(|scope, _| {
+                        ::nexmark::queries::q4_q6_common_managed(
+                            &nexmark_input,
+                            nexmark_timer,
+                            scope,
+                        )
+                            .capture_into(nexmark_input.closed_auctions.clone());
+                        ::nexmark::queries::q6_managed(&nexmark_input, nexmark_timer, scope)
+                            .probe_with(&mut probe);
+                    });
+                }
+
+                // Q7. Highest Bid. FASTER.
+                if queries.iter().any(|x| *x == "q7_faster") {
+                    worker.dataflow::<_, _, _, FASTERBackend>(|scope, _| {
+                        // Window ticks every 10 seconds.
+                        // NEXMark default is different: ticks every 60s
+                        let window_size_ns = 10_000_000_000;
+                        ::nexmark::queries::q7_managed(
+                            &nexmark_input,
+                            nexmark_timer,
+                            scope,
+                            window_size_ns,
+                        )
+                        .probe_with(&mut probe);
+                    });
+                }
+
+                // Q7. Highest Bid. RocksDB.
+                if queries.iter().any(|x| *x == "q7_rocksdb") {
+                    worker.dataflow::<_, _, _, RocksDBBackend>(|scope, _| {
+                        // Window ticks every 10 seconds.
+                        // NEXMark default is different: ticks every 60s
+                        let window_size_ns = 10_000_000_000;
+                        ::nexmark::queries::q7_managed(
+                            &nexmark_input,
+                            nexmark_timer,
+                            scope,
+                            window_size_ns,
                         )
                             .probe_with(&mut probe);
                     });
