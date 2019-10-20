@@ -908,6 +908,22 @@ fn main() {
                     });
                 }
 
+                // 2nd window implementation with RocksDB using merge and RANK
+                if queries.iter().any(|x| *x == "keyed_window_2b_rocksdb_rank") {
+                    assert!(window_slice_count > 0);
+                    assert!(window_slide_ns > 0);
+                    worker.dataflow::<_, _, _, RocksDBMergeBackend>(|scope, _| {
+                        ::nexmark::queries::keyed_window_2b_rocksdb_rank(
+                            &nexmark_input,
+                            nexmark_timer,
+                            scope,
+                            window_slice_count,
+                            window_slide_ns,
+                        )
+                            .probe_with(&mut probe);
+                    });
+                }
+
                 // 3rd window implementation with RocksDB using put + get
                 if queries.iter().any(|x| *x == "window_3a_rocksdb") {
                     assert!(window_slice_count > 0);
