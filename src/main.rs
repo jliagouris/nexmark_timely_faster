@@ -892,6 +892,22 @@ fn main() {
                     });
                 }
 
+                // 3rd window implementation with RocksDB using put + get
+                if queries.iter().any(|x| *x == "keyed_window_3a_rocksdb_count") {
+                    assert!(window_slice_count > 0);
+                    assert!(window_slide_ns > 0);
+                    worker.dataflow::<_, _, _, RocksDBBackend>(|scope, _| {
+                        ::nexmark::queries::keyed_window_3a_rocksdb_count(
+                            &nexmark_input,
+                            nexmark_timer,
+                            scope,
+                            window_slice_count,
+                            window_slide_ns,
+                        )
+                        .probe_with(&mut probe);
+                    });
+                }
+
                 // 3rd window implementation with RocksDB using put + get and COUNT
                 if queries.iter().any(|x| *x == "window_3a_rocksdb_count") {
                     assert!(window_slice_count > 0);
