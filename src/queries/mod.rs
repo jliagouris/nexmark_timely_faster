@@ -23,6 +23,7 @@ mod window_2b_rocksdb_rank;
 mod window_2_faster_count;
 mod keyed_window_3_faster_count;
 mod window_2_faster_rank;
+mod keyed_window_2_faster_rank;
 mod window_3_faster;
 mod window_3a_rocksdb;
 mod window_3a_rocksdb_count;
@@ -80,6 +81,7 @@ pub use self::window_1_faster_rank_custom_slice::window_1_faster_rank_custom_sli
 pub use self::window_2_faster::window_2_faster;
 pub use self::window_2_faster_count::window_2_faster_count;
 pub use self::window_2_faster_rank::window_2_faster_rank;
+pub use self::keyed_window_2_faster_rank::keyed_window_2_faster_rank;
 pub use self::window_3_faster::window_3_faster;
 pub use self::window_3_faster_count::window_3_faster_count;
 pub use self::keyed_window_3_faster_count::keyed_window_3_faster_count;

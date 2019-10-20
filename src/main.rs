@@ -684,6 +684,22 @@ fn main() {
                     });
                 }
 
+                // 2nd window implementation with FASTER and RANK aggregation
+                if queries.iter().any(|x| *x == "keyed_window_2_faster_rank") {
+                    assert!(window_slice_count > 0);
+                    assert!(window_slide_ns > 0);
+                    worker.dataflow::<_, _, _, FASTERBackend>(|scope, _| {
+                        ::nexmark::queries::keyed_window_2_faster_rank(
+                            &nexmark_input,
+                            nexmark_timer,
+                            scope,
+                            window_slice_count,
+                            window_slide_ns,
+                        )
+                            .probe_with(&mut probe);
+                    });
+                }
+
                 // 3rd window implementation with FASTER
                 if queries.iter().any(|x| *x == "window_3_faster") {
                     assert!(window_slice_count > 0);
