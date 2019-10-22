@@ -83,6 +83,7 @@ pub fn keyed_window_3_faster_count<S: Scope<Timestamp = usize>>(
                 });
 
                 notificator.for_each(|cap, _, _| {
+                    // println!("Received notification for end of window {:?}", cap.time());
                     let mut windows_to_fire = Vec::new();
                     windows_to_fire.push(*cap.time());
                     if to_fire.len() > 0 {
@@ -91,11 +92,9 @@ pub fn keyed_window_3_faster_count<S: Scope<Timestamp = usize>>(
                         to_fire.clear();
                     }
                     for window_end in windows_to_fire {
-                        // println!("Received notification for end of window {:?}", &(cap.time()));
-                        //let window_end = cap.time();
                         let window_start = window_end - (window_slide_ns * window_slice_count);
                         // println!("Start of window: {}", window_start);
-                        // println!("End of window: {}", *window_end);
+                        // println!("End of window: {}", window_end);
 
                         // Step 1: Get all distinct keys appearing in the expired window 
                         let mut all_keys = HashSet::new();  
