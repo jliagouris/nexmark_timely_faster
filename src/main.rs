@@ -309,7 +309,7 @@ fn main() {
                 // Q3: Join some auctions. FASTER.
                 if queries.iter().any(|x| *x == "q3_faster") {
                     worker.dataflow::<_, _, _, FASTERBackend>(|scope, _| {
-                        ::nexmark::queries::q3_managed(&nexmark_input, nexmark_timer, scope)
+                        ::nexmark::queries::nexmark::q3_managed(&nexmark_input, nexmark_timer, scope)
                             .probe_with(&mut probe);
                     });
                 }
@@ -317,7 +317,7 @@ fn main() {
                 // Q3: Join some auctions. RocksDB.
                 if queries.iter().any(|x| *x == "q3_rocksdb") {
                     worker.dataflow::<_, _, _, RocksDBBackend>(|scope, _| {
-                        ::nexmark::queries::q3_managed(&nexmark_input, nexmark_timer, scope)
+                        ::nexmark::queries::nexmark::q3_managed(&nexmark_input, nexmark_timer, scope)
                             .probe_with(&mut probe);
                     });
                 }
@@ -326,13 +326,13 @@ fn main() {
                 // Uses FASTER for the common part and an in-memory hash map for the final aggregation
                 if queries.iter().any(|x| *x == "q4_flex") {
                     worker.dataflow::<_, _, _, FASTERBackend>(|scope, _| {
-                        ::nexmark::queries::q4_q6_common_managed(
+                        ::nexmark::queries::nexmark::q4_q6_common_managed(
                             &nexmark_input,
                             nexmark_timer,
                             scope,
                         )
                             .capture_into(nexmark_input.closed_auctions.clone());
-                        ::nexmark::queries::q4(&nexmark_input, nexmark_timer, scope)
+                        ::nexmark::queries::nexmark::q4(&nexmark_input, nexmark_timer, scope)
                             .probe_with(&mut probe);
                     });
                 }
@@ -340,13 +340,13 @@ fn main() {
                 // Q4: Find average selling price per category. FASTER.
                 if queries.iter().any(|x| *x == "q4_faster") {
                     worker.dataflow::<_, _, _, FASTERBackend>(|scope, _| {
-                        ::nexmark::queries::q4_q6_common_managed(
+                        ::nexmark::queries::nexmark::q4_q6_common_managed(
                             &nexmark_input,
                             nexmark_timer,
                             scope,
                         )
                             .capture_into(nexmark_input.closed_auctions.clone());
-                        ::nexmark::queries::q4_managed(&nexmark_input, nexmark_timer, scope)
+                        ::nexmark::queries::nexmark::q4_managed(&nexmark_input, nexmark_timer, scope)
                             .probe_with(&mut probe);
                     });
                 }
@@ -354,13 +354,13 @@ fn main() {
                 // Q4: Find average selling price per category. RocksDB.
                 if queries.iter().any(|x| *x == "q4_rocksdb") {
                     worker.dataflow::<_, _, _, RocksDBBackend>(|scope, _| {
-                        ::nexmark::queries::q4_q6_common_managed(
+                        ::nexmark::queries::nexmark::q4_q6_common_managed(
                             &nexmark_input,
                             nexmark_timer,
                             scope,
                         )
                             .capture_into(nexmark_input.closed_auctions.clone());
-                        ::nexmark::queries::q4_managed(&nexmark_input, nexmark_timer, scope)
+                        ::nexmark::queries::nexmark::q4_managed(&nexmark_input, nexmark_timer, scope)
                             //.inspect_batch(|t,xs| println!("@{}: {:?}", t, xs))
                             .probe_with(&mut probe);
                     });
@@ -373,7 +373,7 @@ fn main() {
                     let w_slice_count = 60;
                     let w_slide_ns = 1_000_000_000;
                     worker.dataflow::<_, _, _, FASTERBackend>(|scope, _| {
-                        ::nexmark::queries::q5_managed(
+                        ::nexmark::queries::nexmark::q5_managed(
                             &nexmark_input,
                             nexmark_timer,
                             scope,
@@ -391,7 +391,7 @@ fn main() {
                     let w_slice_count = 60;
                     let w_slide_ns = 1_000_000_000;
                     worker.dataflow::<_, _, _, FASTERBackend>(|scope, _| {
-                        ::nexmark::queries::q5_managed_index(
+                        ::nexmark::queries::nexmark::q5_managed_index(
                             &nexmark_input,
                             nexmark_timer,
                             scope,
@@ -409,7 +409,7 @@ fn main() {
                     let w_slice_count = 60;
                     let w_slide_ns = 1_000_000_000;
                     worker.dataflow::<_, _, _, RocksDBBackend>(|scope, _| {
-                        ::nexmark::queries::q5_managed(
+                        ::nexmark::queries::nexmark::q5_managed(
                             &nexmark_input,
                             nexmark_timer,
                             scope,
@@ -427,7 +427,7 @@ fn main() {
                     let w_slice_count = 60;
                     let w_slide_ns = 1_000_000_000;
                     worker.dataflow::<_, _, _, RocksDBBackend>(|scope, _| {
-                        ::nexmark::queries::q5_managed_index(
+                        ::nexmark::queries::nexmark::q5_managed_index(
                             &nexmark_input,
                             nexmark_timer,
                             scope,
@@ -441,13 +441,13 @@ fn main() {
                 // Q6. Avg selling price per seller. FASTER.
                 if queries.iter().any(|x| *x == "q6_faster") {
                     worker.dataflow::<_, _, _, FASTERBackend>(|scope, _| {
-                        ::nexmark::queries::q4_q6_common_managed(
+                        ::nexmark::queries::nexmark::q4_q6_common_managed(
                             &nexmark_input,
                             nexmark_timer,
                             scope,
                         )
                             .capture_into(nexmark_input.closed_auctions.clone());
-                        ::nexmark::queries::q6_managed(&nexmark_input, nexmark_timer, scope)
+                        ::nexmark::queries::nexmark::q6_managed(&nexmark_input, nexmark_timer, scope)
                             .probe_with(&mut probe);
                     });
                 }
@@ -455,13 +455,13 @@ fn main() {
                 // Q6. Avg selling price per seller. RocksDB.
                 if queries.iter().any(|x| *x == "q6_rocksdb") {
                     worker.dataflow::<_, _, _, RocksDBBackend>(|scope, _| {
-                        ::nexmark::queries::q4_q6_common_managed(
+                        ::nexmark::queries::nexmark::q4_q6_common_managed(
                             &nexmark_input,
                             nexmark_timer,
                             scope,
                         )
                             .capture_into(nexmark_input.closed_auctions.clone());
-                        ::nexmark::queries::q6_managed(&nexmark_input, nexmark_timer, scope)
+                        ::nexmark::queries::nexmark::q6_managed(&nexmark_input, nexmark_timer, scope)
                             .probe_with(&mut probe);
                     });
                 }
@@ -472,7 +472,7 @@ fn main() {
                         // Window ticks every 10 seconds.
                         // NEXMark default is different: ticks every 60s
                         let window_size_ns = 10_000_000_000;
-                        ::nexmark::queries::q7_managed(
+                        ::nexmark::queries::nexmark::q7_managed(
                             &nexmark_input,
                             nexmark_timer,
                             scope,
@@ -488,7 +488,7 @@ fn main() {
                         // Window ticks every 10 seconds.
                         // NEXMark default is different: ticks every 60s
                         let window_size_ns = 10_000_000_000;
-                        ::nexmark::queries::q7_managed(
+                        ::nexmark::queries::nexmark::q7_managed(
                             &nexmark_input,
                             nexmark_timer,
                             scope,
@@ -502,7 +502,7 @@ fn main() {
                 if queries.iter().any(|x| *x == "q8_faster") {
                     worker.dataflow::<_, _, _, FASTERBackend>(|scope, _| {
                         let window_size_ns = 12 * 60 * 60 * 1_000_000_000;
-                        ::nexmark::queries::q8_managed(
+                        ::nexmark::queries::nexmark::q8_managed(
                             &nexmark_input,
                             nexmark_timer,
                             scope,
@@ -517,7 +517,7 @@ fn main() {
                     worker.dataflow::<_, _, _, RocksDBBackend>(|scope, _| {
                         let window_size_ns = 12 * 60 * 60 * 1_000_000_000;
                         //let window_size_ns = 4 * 1_000_000_000;
-                        ::nexmark::queries::q8_managed(
+                        ::nexmark::queries::nexmark::q8_managed(
                             &nexmark_input,
                             nexmark_timer,
                             scope,
@@ -531,7 +531,7 @@ fn main() {
                 if queries.iter().any(|x| *x == "q8_faster_map") {
                     worker.dataflow::<_, _, _, FASTERBackend>(|scope, _| {
                         let window_size_ns = 12 * 60 * 60 * 1_000_000_000;
-                        ::nexmark::queries::q8_managed_map(
+                        ::nexmark::queries::nexmark::q8_managed_map(
                             &nexmark_input,
                             nexmark_timer,
                             scope,
@@ -546,7 +546,7 @@ fn main() {
                     worker.dataflow::<_, _, _, RocksDBBackend>(|scope, _| {
                         let window_size_ns = 12 * 60 * 60 * 1_000_000_000;
                         //let window_size_ns = 4 * 1_000_000_000;
-                        ::nexmark::queries::q8_managed_map(
+                        ::nexmark::queries::nexmark::q8_managed_map(
                             &nexmark_input,
                             nexmark_timer,
                             scope,
@@ -561,7 +561,7 @@ fn main() {
                     assert!(window_slice_count > 0);
                     assert!(window_slide_ns > 0);
                     worker.dataflow::<_, _, _, FASTERBackend>(|scope, _| {
-                        ::nexmark::queries::window_1_faster(
+                        ::nexmark::queries::windows::global::window_1_faster(
                             &nexmark_input,
                             nexmark_timer,
                             scope,
@@ -577,7 +577,7 @@ fn main() {
                     assert!(window_slice_count > 0);
                     assert!(window_slide_ns > 0);
                     worker.dataflow::<_, _, _, FASTERBackend>(|scope, _| {
-                        ::nexmark::queries::window_1_faster_count(
+                        ::nexmark::queries::windows::global::window_1_faster_count(
                             &nexmark_input,
                             nexmark_timer,
                             scope,
@@ -593,7 +593,7 @@ fn main() {
                     assert!(window_slice_count > 0);
                     assert!(window_slide_ns > 0);
                     worker.dataflow::<_, _, _, FASTERBackend>(|scope, _| {
-                        ::nexmark::queries::window_1_faster_count_custom_slice(
+                        ::nexmark::queries::windows::global::window_1_faster_count_custom_slice(
                             &nexmark_input,
                             nexmark_timer,
                             scope,
@@ -609,7 +609,7 @@ fn main() {
                     assert!(window_slice_count > 0);
                     assert!(window_slide_ns > 0);
                     worker.dataflow::<_, _, _, FASTERBackend>(|scope, _| {
-                        ::nexmark::queries::window_1_faster_rank(
+                        ::nexmark::queries::windows::global::window_1_faster_rank(
                             &nexmark_input,
                             nexmark_timer,
                             scope,
@@ -625,7 +625,7 @@ fn main() {
                     assert!(window_slice_count > 0);
                     assert!(window_slide_ns > 0);
                     worker.dataflow::<_, _, _, FASTERBackend>(|scope, _| {
-                        ::nexmark::queries::window_1_faster_rank_custom_slice(
+                        ::nexmark::queries::windows::global::window_1_faster_rank_custom_slice(
                             &nexmark_input,
                             nexmark_timer,
                             scope,
@@ -641,7 +641,7 @@ fn main() {
                     assert!(window_slice_count > 0);
                     assert!(window_slide_ns > 0);
                     worker.dataflow::<_, _, _, FASTERBackend>(|scope, _| {
-                        ::nexmark::queries::window_2_faster(
+                        ::nexmark::queries::windows::global::window_2_faster(
                             &nexmark_input,
                             nexmark_timer,
                             scope,
@@ -657,7 +657,7 @@ fn main() {
                     assert!(window_slice_count > 0);
                     assert!(window_slide_ns > 0);
                     worker.dataflow::<_, _, _, FASTERBackend>(|scope, _| {
-                        ::nexmark::queries::window_2_faster_count(
+                        ::nexmark::queries::windows::global::window_2_faster_count(
                             &nexmark_input,
                             nexmark_timer,
                             scope,
@@ -673,7 +673,7 @@ fn main() {
                     assert!(window_slice_count > 0);
                     assert!(window_slide_ns > 0);
                     worker.dataflow::<_, _, _, FASTERBackend>(|scope, _| {
-                        ::nexmark::queries::window_2_faster_rank(
+                        ::nexmark::queries::windows::global::window_2_faster_rank(
                             &nexmark_input,
                             nexmark_timer,
                             scope,
@@ -689,7 +689,7 @@ fn main() {
                     assert!(window_slice_count > 0);
                     assert!(window_slide_ns > 0);
                     worker.dataflow::<_, _, _, FASTERBackend>(|scope, _| {
-                        ::nexmark::queries::keyed_window_2_faster_rank(
+                        ::nexmark::queries::windows::keyed::keyed_window_2_faster_rank(
                             &nexmark_input,
                             nexmark_timer,
                             scope,
@@ -705,7 +705,7 @@ fn main() {
                     assert!(window_slice_count > 0);
                     assert!(window_slide_ns > 0);
                     worker.dataflow::<_, _, _, FASTERBackend>(|scope, _| {
-                        ::nexmark::queries::window_3_faster(
+                        ::nexmark::queries::windows::global::window_3_faster(
                             &nexmark_input,
                             nexmark_timer,
                             scope,
@@ -721,7 +721,7 @@ fn main() {
                     assert!(window_slice_count > 0);
                     assert!(window_slide_ns > 0);
                     worker.dataflow::<_, _, _, FASTERBackend>(|scope, _| {
-                        ::nexmark::queries::window_3_faster_count(
+                        ::nexmark::queries::windows::global::window_3_faster_count(
                             &nexmark_input,
                             nexmark_timer,
                             scope,
@@ -737,7 +737,7 @@ fn main() {
                     assert!(window_slice_count > 0);
                     assert!(window_slide_ns > 0);
                     worker.dataflow::<_, _, _, FASTERBackend>(|scope, _| {
-                        ::nexmark::queries::keyed_window_3_faster_count(
+                        ::nexmark::queries::windows::keyed::keyed_window_3_faster_count(
                             &nexmark_input,
                             nexmark_timer,
                             scope,
@@ -753,7 +753,7 @@ fn main() {
                     assert!(window_slice_count > 0);
                     assert!(window_slide_ns > 0);
                     worker.dataflow::<_, _, _, FASTERBackend>(|scope, _| {
-                        ::nexmark::queries::window_3_faster_rank(
+                        ::nexmark::queries::windows::global::window_3_faster_rank(
                             &nexmark_input,
                             nexmark_timer,
                             scope,
@@ -769,7 +769,7 @@ fn main() {
                     assert!(window_slice_count > 0);
                     assert!(window_slide_ns > 0);
                     worker.dataflow::<_, _, _, RocksDBBackend>(|scope, _| {
-                        ::nexmark::queries::window_1_rocksdb(
+                        ::nexmark::queries::windows::global::window_1_rocksdb(
                             &nexmark_input,
                             nexmark_timer,
                             scope,
@@ -785,7 +785,7 @@ fn main() {
                     assert!(window_slice_count > 0);
                     assert!(window_slide_ns > 0);
                     worker.dataflow::<_, _, _, RocksDBBackend>(|scope, _| {
-                        ::nexmark::queries::window_1_rocksdb_count(
+                        ::nexmark::queries::windows::global::window_1_rocksdb_count(
                             &nexmark_input,
                             nexmark_timer,
                             scope,
@@ -801,7 +801,7 @@ fn main() {
                     assert!(window_slice_count > 0);
                     assert!(window_slide_ns > 0);
                     worker.dataflow::<_, _, _, RocksDBBackend>(|scope, _| {
-                        ::nexmark::queries::window_1_rocksdb_rank(
+                        ::nexmark::queries::windows::global::window_1_rocksdb_rank(
                             &nexmark_input,
                             nexmark_timer,
                             scope,
@@ -817,7 +817,7 @@ fn main() {
                     assert!(window_slice_count > 0);
                     assert!(window_slide_ns > 0);
                     worker.dataflow::<_, _, _, RocksDBBackend>(|scope, _| {
-                        ::nexmark::queries::window_2a_rocksdb(  // Same implementation with FASTER
+                        ::nexmark::queries::windows::global::window_2a_rocksdb(  // Same implementation with FASTER
                             &nexmark_input,
                             nexmark_timer,
                             scope,
@@ -833,7 +833,7 @@ fn main() {
                     assert!(window_slice_count > 0);
                     assert!(window_slide_ns > 0);
                     worker.dataflow::<_, _, _, RocksDBBackend>(|scope, _| {
-                        ::nexmark::queries::window_2a_rocksdb_count(
+                        ::nexmark::queries::windows::global::window_2a_rocksdb_count(
                             &nexmark_input,
                             nexmark_timer,
                             scope,
@@ -849,7 +849,7 @@ fn main() {
                     assert!(window_slice_count > 0);
                     assert!(window_slide_ns > 0);
                     worker.dataflow::<_, _, _, RocksDBBackend>(|scope, _| {
-                        ::nexmark::queries::window_2a_rocksdb_rank(
+                        ::nexmark::queries::windows::global::window_2a_rocksdb_rank(
                             &nexmark_input,
                             nexmark_timer,
                             scope,
@@ -865,7 +865,7 @@ fn main() {
                     assert!(window_slice_count > 0);
                     assert!(window_slide_ns > 0);
                     worker.dataflow::<_, _, _, RocksDBMergeBackend>(|scope, _| {
-                        ::nexmark::queries::window_2b_rocksdb(
+                        ::nexmark::queries::windows::global::window_2b_rocksdb(
                             &nexmark_input,
                             nexmark_timer,
                             scope,
@@ -881,7 +881,7 @@ fn main() {
                     assert!(window_slice_count > 0);
                     assert!(window_slide_ns > 0);
                     worker.dataflow::<_, _, _, RocksDBMergeBackend2>(|scope, _| {
-                        ::nexmark::queries::window_2b_rocksdb_count(
+                        ::nexmark::queries::windows::global::window_2b_rocksdb_count(
                             &nexmark_input,
                             nexmark_timer,
                             scope,
@@ -897,7 +897,7 @@ fn main() {
                     assert!(window_slice_count > 0);
                     assert!(window_slide_ns > 0);
                     worker.dataflow::<_, _, _, RocksDBMergeBackend>(|scope, _| {
-                        ::nexmark::queries::window_2b_rocksdb_rank(
+                        ::nexmark::queries::windows::global::window_2b_rocksdb_rank(
                             &nexmark_input,
                             nexmark_timer,
                             scope,
@@ -913,7 +913,7 @@ fn main() {
                     assert!(window_slice_count > 0);
                     assert!(window_slide_ns > 0);
                     worker.dataflow::<_, _, _, RocksDBMergeBackend>(|scope, _| {
-                        ::nexmark::queries::keyed_window_2b_rocksdb_rank(
+                        ::nexmark::queries::windows::keyed::keyed_window_2b_rocksdb_rank(
                             &nexmark_input,
                             nexmark_timer,
                             scope,
@@ -929,7 +929,7 @@ fn main() {
                     assert!(window_slice_count > 0);
                     assert!(window_slide_ns > 0);
                     worker.dataflow::<_, _, _, RocksDBBackend>(|scope, _| {
-                        ::nexmark::queries::window_3a_rocksdb(
+                        ::nexmark::queries::windows::global::window_3a_rocksdb(
                             &nexmark_input,
                             nexmark_timer,
                             scope,
@@ -945,7 +945,7 @@ fn main() {
                     assert!(window_slice_count > 0);
                     assert!(window_slide_ns > 0);
                     worker.dataflow::<_, _, _, RocksDBBackend>(|scope, _| {
-                        ::nexmark::queries::keyed_window_3a_rocksdb_count(
+                        ::nexmark::queries::windows::keyed::keyed_window_3a_rocksdb_count(
                             &nexmark_input,
                             nexmark_timer,
                             scope,
@@ -961,7 +961,7 @@ fn main() {
                     assert!(window_slice_count > 0);
                     assert!(window_slide_ns > 0);
                     worker.dataflow::<_, _, _, RocksDBBackend>(|scope, _| {
-                        ::nexmark::queries::window_3a_rocksdb_count(
+                        ::nexmark::queries::windows::global::window_3a_rocksdb_count(
                             &nexmark_input,
                             nexmark_timer,
                             scope,
@@ -977,7 +977,7 @@ fn main() {
                     assert!(window_slice_count > 0);
                     assert!(window_slide_ns > 0);
                     worker.dataflow::<_, _, _, RocksDBBackend>(|scope, _| {
-                        ::nexmark::queries::window_3a_rocksdb_rank(
+                        ::nexmark::queries::windows::global::window_3a_rocksdb_rank(
                             &nexmark_input,
                             nexmark_timer,
                             scope,
@@ -993,7 +993,7 @@ fn main() {
                     assert!(window_slice_count > 0);
                     assert!(window_slide_ns > 0);
                     worker.dataflow::<_, _, _, RocksDBMergeBackend>(|scope, _| {
-                        ::nexmark::queries::window_3b_rocksdb(
+                        ::nexmark::queries::windows::global::window_3b_rocksdb(
                             &nexmark_input,
                             nexmark_timer,
                             scope,
@@ -1009,7 +1009,7 @@ fn main() {
                     assert!(window_slice_count > 0);
                     assert!(window_slide_ns > 0);
                     worker.dataflow::<_, _, _, RocksDBMergeBackend2>(|scope, _| {
-                        ::nexmark::queries::window_3b_rocksdb_count(
+                        ::nexmark::queries::windows::global::window_3b_rocksdb_count(
                             &nexmark_input,
                             nexmark_timer,
                             scope,
@@ -1025,7 +1025,7 @@ fn main() {
                     assert!(window_slice_count > 0);
                     assert!(window_slide_ns > 0);
                     worker.dataflow::<_, _, _, RocksDBMergeBackend>(|scope, _| {
-                        ::nexmark::queries::window_3b_rocksdb_rank(
+                        ::nexmark::queries::windows::global::window_3b_rocksdb_rank(
                             &nexmark_input,
                             nexmark_timer,
                             scope,

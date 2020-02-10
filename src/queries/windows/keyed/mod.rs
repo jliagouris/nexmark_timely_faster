@@ -5,8 +5,17 @@ use timely::dataflow::{Scope, Stream};
 
 use crate::event::{Auction, Bid, Date, Person};
 
-pub mod nexmark;
-pub mod windows;
+mod keyed_window_1_rocksdb_count;
+mod keyed_window_2b_rocksdb_rank;
+mod keyed_window_3_faster_count;
+mod keyed_window_2_faster_rank;
+mod keyed_window_3a_rocksdb_count;
+
+pub use self::keyed_window_1_rocksdb_count::keyed_window_1_rocksdb_count;
+pub use self::keyed_window_2b_rocksdb_rank::keyed_window_2b_rocksdb_rank;
+pub use self::keyed_window_3a_rocksdb_count::keyed_window_3a_rocksdb_count;
+pub use self::keyed_window_2_faster_rank::keyed_window_2_faster_rank;
+pub use self::keyed_window_3_faster_count::keyed_window_3_faster_count;
 
 use faster_rs::FasterKv;
 
