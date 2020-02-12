@@ -604,6 +604,22 @@ fn main() {
                     });
                 }
 
+                // 1st window implementation with FASTER and count aggregation using custom slicing
+                if queries.iter().any(|x| *x == "keyed_window_1_faster_count_custom_slice") {
+                    assert!(window_slice_count > 0);
+                    assert!(window_slide_ns > 0);
+                    worker.dataflow::<_, _, _, FASTERBackend>(|scope, _| {
+                        ::nexmark::queries::windows::keyed::keyed_window_1_faster_count_custom_slice(
+                            &nexmark_input,
+                            nexmark_timer,
+                            scope,
+                            window_slice_count,
+                            window_slide_ns,
+                        )
+                            .probe_with(&mut probe);
+                    });
+                }
+
                 // 1st window implementation with FASTER and RANK aggregation
                 if queries.iter().any(|x| *x == "window_1_faster_rank") {
                     assert!(window_slice_count > 0);
@@ -626,6 +642,22 @@ fn main() {
                     assert!(window_slide_ns > 0);
                     worker.dataflow::<_, _, _, FASTERBackend>(|scope, _| {
                         ::nexmark::queries::windows::global::window_1_faster_rank_custom_slice(
+                            &nexmark_input,
+                            nexmark_timer,
+                            scope,
+                            window_slice_count,
+                            window_slide_ns,
+                        )
+                            .probe_with(&mut probe);
+                    });
+                }
+
+                // 1st window implementation with FASTER and count aggregation using custom slicing
+                if queries.iter().any(|x| *x == "keyed_window_1_faster_rank_custom_slice") {
+                    assert!(window_slice_count > 0);
+                    assert!(window_slide_ns > 0);
+                    worker.dataflow::<_, _, _, FASTERBackend>(|scope, _| {
+                        ::nexmark::queries::windows::keyed::keyed_window_1_faster_rank_custom_slice(
                             &nexmark_input,
                             nexmark_timer,
                             scope,
@@ -796,12 +828,44 @@ fn main() {
                     });
                 }
 
+                // 1st window implementation with RocksDB and COUNT aggregation
+                if queries.iter().any(|x| *x == "keyed_window_1_rocksdb_count") {
+                    assert!(window_slice_count > 0);
+                    assert!(window_slide_ns > 0);
+                    worker.dataflow::<_, _, _, RocksDBBackend>(|scope, _| {
+                        ::nexmark::queries::windows::keyed::keyed_window_1_rocksdb_count(
+                            &nexmark_input,
+                            nexmark_timer,
+                            scope,
+                            window_slice_count,
+                            window_slide_ns,
+                        )
+                            .probe_with(&mut probe);
+                    });
+                }
+
                 // 1st window implementation with RocksDB and RANK aggregation
                 if queries.iter().any(|x| *x == "window_1_rocksdb_rank") {
                     assert!(window_slice_count > 0);
                     assert!(window_slide_ns > 0);
                     worker.dataflow::<_, _, _, RocksDBBackend>(|scope, _| {
-                        ::nexmark::queries::windows::global::window_1_rocksdb_rank(
+                        ::nexmark::queries::windows::keyed::keyed_window_1_rocksdb_rank(
+                            &nexmark_input,
+                            nexmark_timer,
+                            scope,
+                            window_slice_count,
+                            window_slide_ns,
+                        )
+                            .probe_with(&mut probe);
+                    });
+                }
+
+                // 1st window implementation with RocksDB and RANK aggregation
+                if queries.iter().any(|x| *x == "keyed_window_1_rocksdb_rank") {
+                    assert!(window_slice_count > 0);
+                    assert!(window_slide_ns > 0);
+                    worker.dataflow::<_, _, _, RocksDBBackend>(|scope, _| {
+                        ::nexmark::queries::windows::keyed::keyed_window_1_rocksdb_rank(
                             &nexmark_input,
                             nexmark_timer,
                             scope,

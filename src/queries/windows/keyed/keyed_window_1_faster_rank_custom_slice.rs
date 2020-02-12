@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use timely::dataflow::channels::pact::Exchange;
 use timely::dataflow::{Scope, Stream};
 
@@ -11,7 +13,7 @@ pub fn keyed_window_1_faster_rank_custom_slice<S: Scope<Timestamp = usize>>(
     scope: &mut S,
     window_slice_count: usize,
     window_slide_ns: usize,
-) -> Stream<S, (usize, usize, usize)> {
+) -> Stream<S, (usize, usize, usize, usize)> {
 
     let mut last_slide_seen = 0;
     let num_slices = window_slide_ns / 1_000_000_000;
@@ -52,7 +54,7 @@ pub fn keyed_window_1_faster_rank_custom_slice<S: Scope<Timestamp = usize>>(
                     data.swap(&mut buffer);
                     for record in buffer.iter() {
                         // Construct composite key
-                        let key = (record.1, record.0)
+                        let key = (record.1, record.0);
                         window_contents.insert(key, record.0);
                         let record_slice = ((record.1 / 1_000_000_000) + 1) * 1_000_000_000;  // Use slices of 1s each to index state
                         // println!("Inserting timestamp in the index: slide: {:?}, timestamp: {:?}", record_slice, record.1);
@@ -68,8 +70,8 @@ pub fn keyed_window_1_faster_rank_custom_slice<S: Scope<Timestamp = usize>>(
                         // println!("Lookup slice {:?}", &(cap.time() - 1_000_000_000 * i));
                         if let Some(keys) = slide_index.get(&(cap.time() - 1_000_000_000 * i)) {
                             for (timestamp, auction) in keys.as_ref() {
-                                let value = window_contents.get((timestamp, auction)).expect("Timestamp must exist");
-                                let e = auctions_per_key.entry(auction).or_insert_with(|| Vec::new())
+                                let value = window_contents.get(&(timestamp.clone(), auction.clone())).expect("Timestamp must exist");
+                                let e = auctions_per_key.entry(auction.clone()).or_insert_with(|| Vec::new());
                                 e.push(value);
                             }
                         }
@@ -77,7 +79,7 @@ pub fn keyed_window_1_faster_rank_custom_slice<S: Scope<Timestamp = usize>>(
                             println!("Processing slide {} of last window.", cap.time() - 1_000_000_000 * i);
                         }
                     }
-                    for key, records in auctions_per_key.drain(){
+                    for (key, mut records) in auctions_per_key.drain(){
                         // sort window contents
                         records.sort_unstable();
                         let mut rank = 1;

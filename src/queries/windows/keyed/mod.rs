@@ -6,12 +6,18 @@ use timely::dataflow::{Scope, Stream};
 use crate::event::{Auction, Bid, Date, Person};
 
 mod keyed_window_1_rocksdb_count;
+mod keyed_window_1_rocksdb_rank;
+mod keyed_window_1_faster_count_custom_slice;
+mod keyed_window_1_faster_rank_custom_slice;
 mod keyed_window_2b_rocksdb_rank;
 mod keyed_window_3_faster_count;
 mod keyed_window_2_faster_rank;
 mod keyed_window_3a_rocksdb_count;
 
 pub use self::keyed_window_1_rocksdb_count::keyed_window_1_rocksdb_count;
+pub use self::keyed_window_1_rocksdb_rank::keyed_window_1_rocksdb_rank;
+pub use self::keyed_window_1_faster_count_custom_slice::keyed_window_1_faster_count_custom_slice;
+pub use self::keyed_window_1_faster_rank_custom_slice::keyed_window_1_faster_rank_custom_slice;
 pub use self::keyed_window_2b_rocksdb_rank::keyed_window_2b_rocksdb_rank;
 pub use self::keyed_window_3a_rocksdb_count::keyed_window_3a_rocksdb_count;
 pub use self::keyed_window_2_faster_rank::keyed_window_2_faster_rank;

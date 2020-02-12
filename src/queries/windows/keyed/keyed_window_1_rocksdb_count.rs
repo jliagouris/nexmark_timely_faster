@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use timely::dataflow::channels::pact::Exchange;
 use timely::dataflow::{Scope, Stream};
 use bincode;
@@ -15,7 +17,7 @@ pub fn keyed_window_1_rocksdb_count<S: Scope<Timestamp = usize>>(
     scope: &mut S,
     window_slice_count: usize,
     window_slide_ns: usize,
-) -> Stream<S, (usize, usize)> {
+) -> Stream<S, (usize, u64, usize)> {
 
     let mut last_slide_seen = 0;
 
@@ -52,11 +54,11 @@ pub fn keyed_window_1_rocksdb_count<S: Scope<Timestamp = usize>>(
                             notificator.notify_at(time.delayed(&window_end));
                             // Add enties for window margins so that we can iterate over the
                             // window contents upon notification
-                            // TODO (john): We don't need these dummy entries if we use Seek()
+                            // TODO (john): We don't need these dummy entries if we use Seek() and
+                            // change loop condition below
                             // println!("Inserting dummy record:: time: {:?}, value:{:?}", sl - window_slide_ns, 0);
                             // Start timestamp of window, minimum possible key (zero)
                             window_contents.insert(((sl - window_slide_ns).to_be(), MIN_KEY.to_be()), 0);
-                            // TODO (john): Omit adding the end here and change loop condition below
                             // println!("Inserting dummy record:: time: {:?}, value:{:?}", window_end, 0);
                             // End timestamp of window, max possible key
                             window_contents.insert((window_end.to_be(), MAX_KEY.to_be()), 0);
@@ -77,28 +79,29 @@ pub fn keyed_window_1_rocksdb_count<S: Scope<Timestamp = usize>>(
                 notificator.for_each(|cap, _, _| {
                     let window_end = cap.time();
                     let window_start = window_end - (window_slide_ns * window_slice_count);
-                    let first_slide_end = window_start + window_slide_ns; // To know which records to delete
+                    // Keep the end of first slide to know which records to delete
+                    let first_slide_end = window_start + window_slide_ns;
                     // println!("Start of window: {}", window_start);
                     // println!("End of window: {}", *window_end);
                     // println!("End of first slide: {}", first_slide_end);
                     let mut to_delete = Vec::new();  // Keep keys to delete here
                     to_delete.push((window_start, MIN_KEY));
-                    // A mapping key -> number of entries with that key in the window that fired
-                    let mut key_counts = HashMap::new()
+                    // A mapping form key to the number of entries with that key in the window
+                    let mut key_counts = HashMap::new();
                     {   // Scan the window and count the number of entries per key
                         let mut window_iter = window_contents.iter((window_start.to_be(), MIN_KEY.to_be()));
-                        let _ = window_iter.next();  // Skip dummy record (start of the window)
+                        let _ = window_iter.next();  // Skip first dummy record (window start)
                         for (ser_key, _ser_value) in window_iter {
                             let k = &ser_key[prefix_key_len..];  // Ignore prefix
-                            let (mut timestamp, mut auction_id): (usize,u64) = bincode::deserialize(unsafe {
+                            let (mut timestamp, mut auction_id): (usize, u64) = bincode::deserialize(unsafe {
                                                         std::slice::from_raw_parts(k.as_ptr(), k.len())
-                                                    }).expect("Cannot deserialize timestamp");
+                                                    }).expect("Cannot deserialize key");
                             timestamp = usize::from_be(timestamp);
                             auction_id = u64::from_be(auction_id);
-                            // We don't need to deserialize the values to compute COUNT
+                            // Note (john): We don't need to deserialize the values for COUNT
                             // println!("Found record:: time: {}", timestamp);
-                            if (timestamp % window_slide_ns) != 0 {  // Omit dummy record
-                                let mut e = key_counts.entry(auction_id).or_insert(1);
+                            if (timestamp % window_slide_ns) != 0 {  // Omit last dummy record
+                                let e = key_counts.entry(auction_id).or_insert(1);
                                 *e += 1
                             }
                             if timestamp == *window_end {  // Reached end of the window, exit loop
@@ -113,7 +116,7 @@ pub fn keyed_window_1_rocksdb_count<S: Scope<Timestamp = usize>>(
                         }
                     }
                     // println!("*** End of window: {:?}, Count: {:?}", cap.time(), count);
-                    for auction, count in key_count.drain() {
+                    for (auction, count) in key_counts.drain() {
                         output.session(&cap).give((*cap.time(), auction, count));
                     }
                     // Purge state of first slide in the expired window

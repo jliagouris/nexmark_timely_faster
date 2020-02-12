@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use timely::dataflow::channels::pact::Exchange;
 use timely::dataflow::{Scope, Stream};
 use bincode;
@@ -15,7 +17,7 @@ pub fn keyed_window_1_rocksdb_rank<S: Scope<Timestamp = usize>>(
     scope: &mut S,
     window_slice_count: usize,
     window_slide_ns: usize,
-) -> Stream<S, (usize, usize, usize)> {
+) -> Stream<S, (usize, u64, usize, usize)> {
 
     let mut last_slide_seen = 0;
 
@@ -81,11 +83,11 @@ pub fn keyed_window_1_rocksdb_rank<S: Scope<Timestamp = usize>>(
                     // println!("End of window: {}", *window_end);
                     // println!("End of first slide: {}", first_slide_end);
                     let mut to_delete = Vec::new();  // Keep keys to delete here
-                    to_delete.push(window_start);
+                    to_delete.push((window_start, MIN_KEY));
                     // A mapping key -> vector of values for all entries in the expired window
-                    let mut key_entries = HashMap::new()
+                    let mut key_entries = HashMap::new();
                     {
-                        let mut window_iter = window_contents.iter(window_start.to_be());
+                        let mut window_iter = window_contents.iter((window_start.to_be(), MIN_KEY.to_be()));
                         let _ = window_iter.next();  // Skip dummy record
                         for (ser_key, ser_value) in window_iter {
                             let k = &ser_key[prefix_key_len..];  // Ignore prefix
@@ -93,14 +95,14 @@ pub fn keyed_window_1_rocksdb_rank<S: Scope<Timestamp = usize>>(
                                                         std::slice::from_raw_parts(k.as_ptr(), k.len())
                                                     }).expect("Cannot deserialize timestamp");
                             timestamp = usize::from_be(timestamp);
-                            auction_id = usize::from_be(auction_id);
+                            auction_id = u64::from_be(auction_id);
                             let auction: usize = bincode::deserialize(unsafe {
                                                         std::slice::from_raw_parts(ser_value.as_ptr(), ser_value.len())
                                                     }).expect("Cannot deserialize auction id");
                             // println!("Found record:: time: {}, value:{}", timestamp, auction_id);
                             if (timestamp % window_slide_ns) != 0 {  // Omit dummy records
                                 // Add auction id to window contents
-                                let e = key_entries.entry(auction_id).or_insert_with(|| Vec::new())
+                                let e = key_entries.entry(auction_id).or_insert_with(|| Vec::new());
                                 e.push(auction)
                             }
                             if timestamp == *window_end {  // Reached end of the window, exit loop
@@ -115,7 +117,7 @@ pub fn keyed_window_1_rocksdb_rank<S: Scope<Timestamp = usize>>(
                         }
                     }
                     // Apply the rank function per key
-                    for key, records in key_entries.drain() {
+                    for (key, mut records) in key_entries.drain() {
                         records.sort_unstable(); // Sort auctions by id
                         let mut rank = 1;
                         let mut count = 0;

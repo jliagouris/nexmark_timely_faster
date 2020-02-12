@@ -14,7 +14,7 @@ pub fn window_1_rocksdb_count<S: Scope<Timestamp = usize>>(
     window_slice_count: usize,
     window_slide_ns: usize,
 ) -> Stream<S, (usize, usize)> {
-    
+
     let mut last_slide_seen = 0;
 
     input
@@ -61,15 +61,15 @@ pub fn window_1_rocksdb_count<S: Scope<Timestamp = usize>>(
                     for record in buffer.iter() {
                         let key = record.1; // Event time
                         let auction_id = record.0;
-                        // Add record 
+                        // Add record
                         // println!("Inserting window record:: time: {}, value:{}", key, auction_id);
                         window_contents.insert(key.to_be(), auction_id);
                     }
                 });
 
                 notificator.for_each(|cap, _, _| {
-                    let window_end = cap.time(); 
-                    let window_start = window_end - (window_slide_ns * window_slice_count);  
+                    let window_end = cap.time();
+                    let window_start = window_end - (window_slide_ns * window_slice_count);
                     let first_slide_end = window_start + window_slide_ns; // To know which records to delete
                     // println!("Start of window: {}", window_start);
                     // println!("End of window: {}", *window_end);

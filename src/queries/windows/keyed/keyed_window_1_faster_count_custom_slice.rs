@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use timely::dataflow::channels::pact::Exchange;
 use timely::dataflow::{Scope, Stream};
 
@@ -14,7 +16,7 @@ pub fn keyed_window_1_faster_count_custom_slice<S: Scope<Timestamp = usize>>(
     scope: &mut S,
     window_slice_count: usize,
     window_slide_ns: usize,
-) -> Stream<S, (usize, usize)> {
+) -> Stream<S, (usize, usize, usize)> {
 
     let mut last_slide_seen = 0;
     let num_slices = window_slide_ns / 1_000_000_000;
@@ -75,16 +77,16 @@ pub fn keyed_window_1_faster_count_custom_slice<S: Scope<Timestamp = usize>>(
                         if let Some(keys) = slide_index.get(&(cap.time() - 1_000_000_000 * i)) {
                             for (timestamp, auction) in keys.as_ref() {
                                 // println!("Lookup timestamp {:?}", timestamp);
-                                let _ = window_contents.get((timestamp, auction)).expect("Timestamp must exist");
-                                let e = counts.entry(auction).or_insert(1)
-                                *e += 1;
+                                let _ = window_contents.get(&(timestamp.clone(), auction.clone())).expect("Timestamp must exist");
+                                let mut e = *counts.entry(auction.clone()).or_insert(1);
+                                e += 1;
                             }
                         }
                         else {
                             println!("Processing slide {} of last window.", cap.time() - 1_000_000_000 * i);
                         }
                     }
-                    for key, count in counts.drain() {
+                    for (key, count) in counts.drain() {
                         // println!("*** End of window: {:?}, Count: {:?}", cap.time(), count);
                         output.session(&cap).give((*cap.time(), key, count));
                     }
